@@ -110,30 +110,11 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
                     "Storage Instructions": item.querySelector('textarea[name="storage_instructions[]"]').value,
                     "Notes": item.querySelector('textarea[name="notes[]"]').value
                 };
-                // Combine shipmentData and itemData for each row
                 csvData.push({ ...shipmentData, ...itemData });
             });
             console.log('CSV Data:', csvData);
 
             // Convert to CSV with headers only once
             console.log('Converting to CSV');
-            const worksheet = XLSX.utils.json_to_sheet(csvData, { header: headers });
-            const csv = XLSX.utils.sheet_to_csv(worksheet, { header: 1 });
-            console.log('CSV generated');
-
-            // Download file
-            console.log('Creating download link');
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `packing_list_${shipmentData["Packing List No"] || 'export'}.csv`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            console.log('CSV download triggered');
-        } catch (error) {
-            console.error('CSV Error:', error.message);
-            alert('Error generating CSV: ' + error.message);
-        }
-    }
-});
+            const worksheet = XLSX.utils.json_to_sheet(csvData, { header: headers, skipHeader: false });
+            const csv
