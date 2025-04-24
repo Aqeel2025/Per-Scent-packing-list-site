@@ -1,4 +1,3 @@
-```javascript
 console.log('script.js loaded');
 
 // Add item functionality
