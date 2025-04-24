@@ -1,15 +1,17 @@
 ```javascript
+console.log('script.js loaded');
+
 // Add item functionality
 document.getElementById('addItem').addEventListener('click', () => {
+    console.log('Add Another Item clicked');
     const itemsContainer = document.getElementById('items');
     const firstItem = itemsContainer.querySelector('.item');
     const newItem = firstItem.cloneNode(true);
-    // Clear input values in the cloned item
     newItem.querySelectorAll('input, textarea, select').forEach(input => {
         if (input.tagName === 'SELECT') {
-            input.selectedIndex = 0; // Reset dropdown
+            input.selectedIndex = 0;
         } else {
-            input.value = ''; // Clear text/number/textarea
+            input.value = '';
         }
     });
     itemsContainer.appendChild(newItem);
@@ -18,6 +20,7 @@ document.getElementById('addItem').addEventListener('click', () => {
 // Remove item functionality
 document.addEventListener('click', (e) => {
     if (e.target.classList.contains('remove-item')) {
+        console.log('Remove Item clicked');
         const items = document.querySelectorAll('.item');
         if (items.length > 1) {
             e.target.parentElement.remove();
@@ -27,8 +30,9 @@ document.addEventListener('click', (e) => {
     }
 });
 
-// Show/hide other carrier input based on carrier selection
+// Show/hide other carrier input
 document.getElementById('carrierSelect').addEventListener('change', (e) => {
+    console.log('Carrier Name changed to:', e.target.value);
     const otherCarrierLabel = document.getElementById('otherCarrierLabel');
     const otherCarrierInput = otherCarrierLabel.querySelector('input');
     if (e.target.value === 'Other') {
@@ -41,14 +45,20 @@ document.getElementById('carrierSelect').addEventListener('change', (e) => {
     }
 });
 
-// CSV Export Functionality using SheetJS
+// CSV Export Functionality
 document.getElementById('packingListForm').addEventListener('submit', (e) => {
-    e.preventDefault(); // Prevent form submission
+    console.log('Form submitted');
+    e.preventDefault();
     const form = e.target;
     const action = form.querySelector('button[type="submit"]:focus').value;
+    console.log('Action:', action);
 
     if (action === 'csv') {
+        console.log('CSV generation started');
         try {
+            if (typeof XLSX === 'undefined') {
+                throw new Error('SheetJS (XLSX) is not loaded');
+            }
             // Collect Shipment Details
             const shipmentData = {
                 supplier_name: form.querySelector('input[name="supplier_name"]').value,
@@ -65,12 +75,11 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
                 total_net_weight: form.querySelector('input[name="total_net_weight"]').value,
                 total_gross_weight: form.querySelector('input[name="total_gross_weight"]').value
             };
+            console.log('Shipment Data:', shipmentData);
 
             // Collect Itemized Packing List
             const items = form.querySelectorAll('.item');
             const csvData = [];
-            
-            // Define CSV headers
             const headers = [
                 'Supplier Name', 'Supplier Address', 'Ship to Customer Name and Details', 
                 'Goods Description', 'Packing List No', 'Invoice No', 'Carrier Name', 
@@ -82,8 +91,8 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
                 'Storage Instructions', 'Notes'
             ];
 
-            // Add data rows
-            items.forEach(item => {
+            items.forEach((item, index) => {
+                console.log(`Processing item ${index + 1}`);
                 const itemData = {
                     purchase_order_number: item.querySelector('input[name="purchase_order_number[]"]').value,
                     item_no: item.querySelector('input[name="item_no[]"]').value,
@@ -102,19 +111,18 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
                     storage_instructions: item.querySelector('textarea[name="storage_instructions[]"]').value,
                     notes: item.querySelector('textarea[name="notes[]"]').value
                 };
-
-                // Combine shipment and item data for each row
-                csvData.push({
-                    ...shipmentData,
-                    ...itemData
-                });
+                csvData.push({ ...shipmentData, ...itemData });
             });
+            console.log('CSV Data:', csvData);
 
-            // Convert to CSV using SheetJS
+            // Convert to CSV
+            console.log('Converting to CSV');
             const worksheet = XLSX.utils.json_to_sheet(csvData, { header: headers });
             const csv = XLSX.utils.sheet_to_csv(worksheet);
+            console.log('CSV generated');
 
-            // Create a downloadable file
+            // Download file
+            console.log('Creating download link');
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
@@ -122,7 +130,9 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+            console.log('CSV download triggered');
         } catch (error) {
+            console.error('CSV Error:', error.message);
             alert('Error generating CSV: ' + error.message);
         }
     }
