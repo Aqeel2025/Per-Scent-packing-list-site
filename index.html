@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Per-Scent Supplier Packing List Creation</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- SheetJS CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
     <header>
@@ -71,48 +73,6 @@
         </form>
         <p>After generating the packing list, you can upload the CSV to our <a href="[Your Google Drive Link]" target="_blank">Google Drive folder</a> or view submissions in our <a href="[Your SharePoint List URL]" target="_blank">SharePoint List</a>.</p>
     </main>
-    <script>
-        // JavaScript for adding/removing items and handling carrier selection
-        document.getElementById('addItem').addEventListener('click', () => {
-            const itemsContainer = document.getElementById('items');
-            const firstItem = itemsContainer.querySelector('.item');
-            const newItem = firstItem.cloneNode(true);
-            // Clear input values in the cloned item
-            newItem.querySelectorAll('input, textarea, select').forEach(input => {
-                if (input.tagName === 'SELECT') {
-                    input.selectedIndex = 0; // Reset dropdown
-                } else {
-                    input.value = ''; // Clear text/number/textarea
-                }
-            });
-            itemsContainer.appendChild(newItem);
-        });
-
-        // Remove item functionality
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('remove-item')) {
-                const items = document.querySelectorAll('.item');
-                if (items.length > 1) {
-                    e.target.parentElement.remove();
-                } else {
-                    alert('At least one item is required.');
-                }
-            }
-        });
-
-        // Show/hide other carrier input based on carrier selection
-        document.getElementById('carrierSelect').addEventListener('change', (e) => {
-            const otherCarrierLabel = document.getElementById('otherCarrierLabel');
-            const otherCarrierInput = otherCarrierLabel.querySelector('input');
-            if (e.target.value === 'Other') {
-                otherCarrierLabel.style.display = 'block';
-                otherCarrierInput.required = true;
-            } else {
-                otherCarrierLabel.style.display = 'none';
-                otherCarrierInput.required = false;
-                otherCarrierInput.value = '';
-            }
-        });
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
