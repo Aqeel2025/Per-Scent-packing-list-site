@@ -4,24 +4,73 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Packing List Creator</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 50px;
-            background-color: #f4f4f4;
-        }
-        h1 {
-            color: #2c3e50;
-        }
-        p {
-            font-size: 18px;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h1>Per-Scent Supplier Packing List Creator</h1>
-    <p>Welcome! This website is under construction and will soon allow suppliers to create and share packing lists.</p>
-    <p>Check back soon for the full functionality!</p>
+    <header>
+        <h1>Beauty and Fragrance Packing List Creator</h1>
+        <p>Create and share packing lists for your shipments.</p>
+    </header>
+    <main>
+        <form id="packingListForm">
+            <h2>Shipment Details</h2>
+            <label>Supplier Name: <input type="text" name="supplier_name" required></label>
+            <label>Carrier Name: <input type="text" name="carrier_name"></label>
+            <label>Tracking Number: <input type="text" name="tracking_number"></label>
+            <label>Total Pallets: <input type="number" name="total_pallets" min="0"></label>
+            <label>Total Cartons: <input type="number" name="total_cartons" min="0"></label>
+            <label>Total Net Weight (kg): <input type="number" name="total_net_weight" step="0.1" min="0"></label>
+            <label>Total Gross Weight (kg): <input type="number" name="total_gross_weight" step="0.1" min="0"></label>
+
+            <h2>Itemized Packing List</h2>
+            <div id="items">
+                <div class="item">
+                    <label>Item No.: <input type="number" name="item_no[]" required min="1"></label>
+                    <label>Product Name: <input type="text" name="product_name[]" required></label>
+                    <label>SKU: <input type="text" name="sku[]"></label>
+                    <label>Batch Code: <input type="text" name="batch_code[]" required></label>
+                    <label>Manufacturing Date: <input type="date" name="manufacturing_date[]" required></label>
+                    <label>Expiry Date: <input type="date" name="expiry_date[]" required></label>
+                    <label>Quantity (Units): <input type="number" name="quantity[]" required min="0"></label>
+                    <label>Units per Carton: <input type="number" name="units_per_carton[]" min="0"></label>
+                    <label>Number of Cartons: <input type="number" name="number_of_cartons[]" min="0"></label>
+                    <label>Packaging Type: 
+                        <select name="packaging_type[]">
+                            <option value="Glass Bottle, Individual Box">Glass Bottle, Individual Box</option>
+                            <option value="Plastic Jar, Shrink-Wrapped">Plastic Jar, Shrink-Wrapped</option>
+                            <option value="Plastic Spray Bottle, Boxed">Plastic Spray Bottle, Boxed</option>
+                            <option value="Glass Dropper Bottle, Boxed">Glass Dropper Bottle, Boxed</option>
+                        </select>
+                    </label>
+                    <label>Net Weight per Carton (kg): <input type="number" name="net_weight_carton[]" step="0.1" min="0"></label>
+                    <label>Gross Weight per Carton (kg): <input type="number" name="gross_weight_carton[]" step="0.1" min="0"></label>
+                    <label>Storage Instructions: <textarea name="storage_instructions[]"></textarea></label>
+                    <label>Notes: <textarea name="notes[]"></textarea></label>
+                    <button type="button" class="remove-item">Remove Item</button>
+                </div>
+            </div>
+            <button type="button" id="addItem">Add Another Item</button>
+            <button type="submit" name="action" value="csv">Generate Packing List (CSV)</button>
+            <button type="submit" name="action" value="sharepoint">Submit to SharePoint</button>
+        </form>
+        <p>After generating the packing list, you can upload the CSV to our <a href="[Your Google Drive Link]" target="_blank">Google Drive folder</a> or view submissions in our <a href="[Your SharePoint List URL]" target="_blank">SharePoint List</a>.</p>
+    </main>
+    <script>
+        // Temporary JavaScript for adding/removing items (full functionality in Step 3)
+        document.getElementById('addItem').addEventListener('click', () => {
+            const items = document.getElementById('items');
+            const item = document.querySelector('.item').cloneNode(true);
+            item.querySelectorAll('input, textarea').forEach(input => input.value = '');
+            items.appendChild(item);
+        });
+
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-item')) {
+                if (document.querySelectorAll('.item').length > 1) {
+                    e.target.parentElement.remove();
+                }
+            }
+        });
+    </script>
 </body>
 </html>
