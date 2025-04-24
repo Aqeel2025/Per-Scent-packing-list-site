@@ -56,18 +56,30 @@
         <p>After generating the packing list, you can upload the CSV to our <a href="[Your Google Drive Link]" target="_blank">Google Drive folder</a> or view submissions in our <a href="[Your SharePoint List URL]" target="_blank">SharePoint List</a>.</p>
     </main>
     <script>
-        // Temporary JavaScript for adding/removing items (full functionality in Step 3)
+        // Updated JavaScript for adding only itemized fields
         document.getElementById('addItem').addEventListener('click', () => {
-            const items = document.getElementById('items');
-            const item = document.querySelector('.item').cloneNode(true);
-            item.querySelectorAll('input, textarea').forEach(input => input.value = '');
-            items.appendChild(item);
+            const itemsContainer = document.getElementById('items');
+            const firstItem = itemsContainer.querySelector('.item');
+            const newItem = firstItem.cloneNode(true);
+            // Clear input values in the cloned item
+            newItem.querySelectorAll('input, textarea, select').forEach(input => {
+                if (input.tagName === 'SELECT') {
+                    input.selectedIndex = 0; // Reset dropdown
+                } else {
+                    input.value = ''; // Clear text/number/textarea
+                }
+            });
+            itemsContainer.appendChild(newItem);
         });
 
+        // Remove item functionality
         document.addEventListener('click', (e) => {
             if (e.target.classList.contains('remove-item')) {
-                if (document.querySelectorAll('.item').length > 1) {
+                const items = document.querySelectorAll('.item');
+                if (items.length > 1) {
                     e.target.parentElement.remove();
+                } else {
+                    alert('At least one item is required.');
                 }
             }
         });
