@@ -3,20 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Packing List Creator</title>
+    <title>Per-Scent Supplier Packing List Creation</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <header>
-        <h1>Beauty and Fragrance Packing List Creator</h1>
-        <p>Create and share packing lists for your shipments.</p>
+        <h1>Per-Scent Supplier Packing List Creation</h1>
+        <p>Create and share packing lists for Per-Scent shipments.</p>
     </header>
-    <main>
+    <main class="main-container">
+        <img src="logo.png" alt="Per-Scent Logo" class="logo">
         <form id="packingListForm">
             <h2>Shipment Details</h2>
             <label>Supplier Name: <input type="text" name="supplier_name" required></label>
-            <label>Carrier Name: <input type="text" name="carrier_name"></label>
-            <label>Tracking Number: <input type="text" name="tracking_number"></label>
+            <label>Supplier Address: <textarea name="supplier_address" required></textarea></label>
+            <label>Ship to Customer Name and Details: <textarea name="ship_to_customer" required>Per-Scent</textarea></label>
+            <label>Goods Description: <textarea name="goods_description" required></textarea></label>
+            <label>Packing List No: <input type="text" name="packing_list_no" required></label>
+            <label>Invoice No: <input type="text" name="invoice_no" required></label>
+            <label>Carrier Name: 
+                <select name="carrier_name" id="carrierSelect" required>
+                    <option value="Own Collection">Own Collection</option>
+                    <option value="FedEx">FedEx</option>
+                    <option value="DHL">DHL</option>
+                    <option value="UPS">UPS</option>
+                    <option value="Other">Other</option>
+                </select>
+            </label>
+            <label id="otherCarrierLabel" style="display: none;">Other Carrier: <input type="text" name="other_carrier"></label>
             <label>Total Pallets: <input type="number" name="total_pallets" min="0"></label>
             <label>Total Cartons: <input type="number" name="total_cartons" min="0"></label>
             <label>Total Net Weight (kg): <input type="number" name="total_net_weight" step="0.1" min="0"></label>
@@ -25,9 +39,11 @@
             <h2>Itemized Packing List</h2>
             <div id="items">
                 <div class="item">
+                    <label>Purchase Order Number: <input type="text" name="purchase_order_number[]" required></label>
                     <label>Item No.: <input type="number" name="item_no[]" required min="1"></label>
                     <label>Product Name: <input type="text" name="product_name[]" required></label>
                     <label>SKU: <input type="text" name="sku[]"></label>
+                    <label>Product EAN Code: <input type="text" name="ean_code[]"></label>
                     <label>Batch Code: <input type="text" name="batch_code[]" required></label>
                     <label>Manufacturing Date: <input type="date" name="manufacturing_date[]" required></label>
                     <label>Expiry Date: <input type="date" name="expiry_date[]" required></label>
@@ -56,7 +72,7 @@
         <p>After generating the packing list, you can upload the CSV to our <a href="[Your Google Drive Link]" target="_blank">Google Drive folder</a> or view submissions in our <a href="[Your SharePoint List URL]" target="_blank">SharePoint List</a>.</p>
     </main>
     <script>
-        // Updated JavaScript for adding only itemized fields
+        // JavaScript for adding/removing items and handling carrier selection
         document.getElementById('addItem').addEventListener('click', () => {
             const itemsContainer = document.getElementById('items');
             const firstItem = itemsContainer.querySelector('.item');
@@ -81,6 +97,20 @@
                 } else {
                     alert('At least one item is required.');
                 }
+            }
+        });
+
+        // Show/hide other carrier input based on carrier selection
+        document.getElementById('carrierSelect').addEventListener('change', (e) => {
+            const otherCarrierLabel = document.getElementById('otherCarrierLabel');
+            const otherCarrierInput = otherCarrierLabel.querySelector('input');
+            if (e.target.value === 'Other') {
+                otherCarrierLabel.style.display = 'block';
+                otherCarrierInput.required = true;
+            } else {
+                otherCarrierLabel.style.display = 'none';
+                otherCarrierInput.required = false;
+                otherCarrierInput.value = '';
             }
         });
     </script>
