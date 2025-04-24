@@ -107,7 +107,7 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
                 "Goods Description", "Packing List No", "Invoice No", "Carrier Name", 
                 "Total Pallets", "Total Cartons", "Total Net Weight (kg)", "Total Gross Weight (kg)",
                 "Purchase Order Number", "Item No.", "Product Name", "SKU", "Product EAN Code", 
-                "Batch Code", "Manufacturing Date", "Expiry Date", "Quantity (Units)", 
+                "Product HS Code", "Batch Code", "Manufacturing Date", "Expiry Date", "Quantity (Units)", 
                 "Units per Carton", "Number of Cartons", "Packaging Type", 
                 "Net Weight per Carton (kg)", "Gross Weight per Carton (kg)", 
                 "Storage Instructions", "Notes"
@@ -121,6 +121,7 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
                     "Product Name": item.querySelector('input[name="product_name[]"]').value,
                     "SKU": item.querySelector('input[name="sku[]"]').value,
                     "Product EAN Code": item.querySelector('input[name="ean_code[]"]').value,
+                    "Product HS Code": item.querySelector('input[name="hs_code[]"]').value,
                     "Batch Code": item.querySelector('input[name="batch_code[]"]').value,
                     "Manufacturing Date": item.querySelector('input[name="manufacturing_date[]"]').value,
                     "Expiry Date": item.querySelector('input[name="expiry_date[]"]').value,
