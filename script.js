@@ -1,28 +1,51 @@
 console.log('script.js loaded');
 
-// Add item functionality
+// Set the initial Item No. for the first item on page load
+document.addEventListener('DOMContentLoaded', () => {
+    const firstItem = document.querySelector('.item');
+    const firstItemNoInput = firstItem.querySelector('input[name="item_no[]"]');
+    firstItemNoInput.value = 1;
+    firstItemNoInput.readOnly = true; // Make the field read-only
+});
+
+// Add item functionality with auto-incrementing Item No.
 document.getElementById('addItem').addEventListener('click', () => {
     console.log('Add Another Item clicked');
     const itemsContainer = document.getElementById('items');
     const firstItem = itemsContainer.querySelector('.item');
     const newItem = firstItem.cloneNode(true);
+
+    // Clear all inputs in the new item except Item No.
     newItem.querySelectorAll('input, textarea, select').forEach(input => {
         if (input.tagName === 'SELECT') {
             input.selectedIndex = 0;
-        } else {
+        } else if (input.name !== 'item_no[]') {
             input.value = '';
         }
     });
+
+    // Set the Item No. for the new item
+    const currentItemCount = itemsContainer.querySelectorAll('.item').length;
+    const newItemNoInput = newItem.querySelector('input[name="item_no[]"]');
+    newItemNoInput.value = currentItemCount + 1;
+    newItemNoInput.readOnly = true; // Make the field read-only
+
     itemsContainer.appendChild(newItem);
 });
 
-// Remove item functionality
+// Remove item functionality with renumbering
 document.addEventListener('click', (e) => {
     if (e.target.classList.contains('remove-item')) {
         console.log('Remove Item clicked');
         const items = document.querySelectorAll('.item');
         if (items.length > 1) {
             e.target.parentElement.remove();
+            // Renumber remaining items
+            const remainingItems = document.querySelectorAll('.item');
+            remainingItems.forEach((item, index) => {
+                const itemNoInput = item.querySelector('input[name="item_no[]"]');
+                itemNoInput.value = index + 1;
+            });
         } else {
             alert('At least one item is required.');
         }
@@ -117,4 +140,22 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
             // Convert to CSV with headers only once
             console.log('Converting to CSV');
             const worksheet = XLSX.utils.json_to_sheet(csvData, { header: headers, skipHeader: false });
-            const csv
+            const csv = XLSX.utils.sheet_to_csv(worksheet);
+            console.log('CSV generated:', csv);
+
+            // Download file
+            console.log('Creating download link');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `packing_list_${shipmentData["Packing List No"] || 'export'}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            console.log('CSV download triggered');
+        } catch (error) {
+            console.error('CSV Error:', error.message);
+            alert('Error generating CSV: ' + error.message);
+        }
+    }
+});
