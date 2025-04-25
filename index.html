@@ -5,26 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Per-Scent Supplier Packing List Creation</title>
     <link rel="stylesheet" href="styles.css">
-    <!-- SheetJS CDN with local fallback -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.12/xlsx.full.min.js" onload="console.log('SheetJS CDN loaded')" onerror="loadSheetJSFallback()"></script>
+    <!-- SheetJS: Try local first, fallback to CDN -->
+    <script src="xlsx.full.min.js" onload="console.log('Local SheetJS loaded')" onerror="loadSheetJSCDN()"></script>
     <script>
-        function loadSheetJSFallback() {
-            console.warn('SheetJS CDN failed, loading local xlsx.full.min.js');
+        function loadSheetJSCDN() {
+            console.warn('Local SheetJS failed, trying CDN');
             const script = document.createElement('script');
-            script.src = 'xlsx.full.min.js';
-            script.onload = () => console.log('Local SheetJS loaded');
-            script.onerror = () => console.error('Error: Local SheetJS failed to load');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.12/xlsx.full.min.js';
+            script.onload = () => console.log('SheetJS CDN loaded');
+            script.onerror = () => console.error('Error: SheetJS CDN failed to load');
             document.head.appendChild(script);
         }
-        // Check if SheetJS loaded after a delay
+        // Verify SheetJS after a delay
         setTimeout(() => {
             if (!window.XLSX) {
-                console.error('SheetJS not loaded, triggering fallback');
-                loadSheetJSFallback();
+                console.error('SheetJS not loaded after attempts');
+                alert('Error: SheetJS library failed to load. Please ensure xlsx.full.min.js is in the project directory.');
             } else {
                 console.log('SheetJS confirmed loaded');
             }
-        }, 1000);
+        }, 2000);
     </script>
 </head>
 <body>
