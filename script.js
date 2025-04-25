@@ -114,7 +114,7 @@ function generateCSVData(form) {
     try {
         if (!window.XLSX) {
             console.error('Error: XLSX library not loaded');
-            throw new Error('SheetJS library is not loaded. Check the CDN.');
+            throw new Error('SheetJS library is not loaded. Ensure xlsx.full.min.js is available.');
         }
 
         // Collect shipment data
@@ -178,7 +178,7 @@ function generateCSVData(form) {
         console.log('Converting to CSV');
         const worksheet = XLSX.utils.json_to_sheet(csvData, { header: headers, skipHeader: false });
         const csv = XLSX.utils.sheet_to_csv(worksheet);
-        console.log('CSV content generated');
+        console.log('CSV content generated, length:', csv.length);
 
         const filename = `packing_list_${shipmentData["Packing List No"] || 'export'}.csv`;
         console.log('CSV filename:', filename);
