@@ -114,7 +114,7 @@ function generateCSVData(form) {
     try {
         if (!window.XLSX) {
             console.error('Error: XLSX library not loaded');
-            throw new Error('SheetJS library is not loaded. Ensure xlsx.full.min.js is available.');
+            throw new Error('SheetJS library is not loaded. Ensure xlsx.full.min.js is in the project directory.');
         }
 
         // Collect shipment data
