@@ -5,8 +5,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Per-Scent Supplier Packing List Creation</title>
     <link rel="stylesheet" href="styles.css">
-    <!-- SheetJS CDN with integrity -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" integrity="sha512-r22gChDnGvBylk90+2e/ycr3RVrDi8DIOkIGNwZ7eFqnh1AX6G+/ddN90MF+mV7NxVUmnQKOKEBTtT2Y5Gr2J2Q==" crossorigin="anonymous"></script>
+    <!-- SheetJS CDN with local fallback -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.12/xlsx.full.min.js" onload="console.log('SheetJS CDN loaded')" onerror="loadSheetJSFallback()"></script>
+    <script>
+        function loadSheetJSFallback() {
+            console.warn('SheetJS CDN failed, loading local xlsx.full.min.js');
+            const script = document.createElement('script');
+            script.src = 'xlsx.full.min.js';
+            script.onload = () => console.log('Local SheetJS loaded');
+            script.onerror = () => console.error('Error: Local SheetJS failed to load');
+            document.head.appendChild(script);
+        }
+        // Check if SheetJS loaded after a delay
+        setTimeout(() => {
+            if (!window.XLSX) {
+                console.error('SheetJS not loaded, triggering fallback');
+                loadSheetJSFallback();
+            } else {
+                console.log('SheetJS confirmed loaded');
+            }
+        }, 1000);
+    </script>
 </head>
 <body>
     <header>
