@@ -5,26 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Per-Scent Supplier Packing List Creation</title>
     <link rel="stylesheet" href="styles.css">
-    <!-- SheetJS: Try local first, fallback to CDN -->
-    <script src="xlsx.full.min.js" onload="console.log('Local SheetJS loaded')" onerror="loadSheetJSCDN()"></script>
+    <!-- SheetJS CDN with local fallback -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" onload="console.log('SheetJS CDN loaded')" onerror="loadSheetJSFallback()"></script>
     <script>
-        function loadSheetJSCDN() {
-            console.warn('Local SheetJS failed, trying CDN');
+        function loadSheetJSFallback() {
+            console.warn('SheetJS CDN failed, loading local xlsx.full.min.js');
             const script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.12/xlsx.full.min.js';
-            script.onload = () => console.log('SheetJS CDN loaded');
-            script.onerror = () => console.error('Error: SheetJS CDN failed to load');
+            script.src = 'xlsx.full.min.js';
+            script.onload = () => console.log('Local SheetJS loaded');
+            script.onerror = () => console.error('Error: Local SheetJS failed to load. Ensure xlsx.full.min.js is in the project directory.');
             document.head.appendChild(script);
         }
         // Verify SheetJS after a delay
         setTimeout(() => {
             if (!window.XLSX) {
-                console.error('SheetJS not loaded after attempts');
-                alert('Error: SheetJS library failed to load. Please ensure xlsx.full.min.js is in the project directory.');
+                console.error('SheetJS not loaded, triggering fallback');
+                loadSheetJSFallback();
             } else {
                 console.log('SheetJS confirmed loaded');
             }
-        }, 2000);
+        }, 1000);
     </script>
 </head>
 <body>
@@ -88,8 +88,6 @@
             </div>
             <button type="button" id="addItem">Add Another Item</button>
             <button type="submit" name="action" value="csv">Generate Packing List (CSV)</button>
-            <button type="submit" name="action" value="email">Send via Email</button>
-            <button type="submit" name="action" value="google_drive">Upload to Google Drive</button>
         </form>
         <p>After generating the packing list, you can upload the CSV to our <a href="[Your Google Drive Link]" target="_blank">Google Drive folder</a>.</p>
     </main>
