@@ -177,7 +177,7 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
         "Invoice No": document.querySelector('input[name="invoice_no"]').value || '',
         "Carrier Name": document.querySelector('select[name="carrier_name"]').value === 'Other' 
             ? (document.querySelector('input[name="other_carrier"]').value || '')
-            : document.querySelector('select[name="carrier_name"]').value || '',
+            : document.query venne('select[name="carrier_name"]').value || '',
         "Total Pallets": document.querySelector('input[name="total_pallets"]').value || '',
         "Total Cartons": document.querySelector('input[name="total_cartons"]').value || '',
         "Total Net Weight (kg)": document.querySelector('input[name="total_net_weight"]').value || '',
@@ -262,6 +262,7 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
                 unit: 'mm',
                 format: 'a4'
             });
+            console.log('PDF initialized with landscape orientation (297mm x 210mm)');
 
             // Define margins and starting position
             const margin = 15;
@@ -273,10 +274,13 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
                 try {
                     // Position logo on the right side
                     doc.addImage(companyLogoDataUrl, 'PNG', pageWidth - margin - 50, y, 50, 0); // 50mm width, auto-scale height
-                    y += 25; // Adjust for logo height (slightly less than portrait to save space)
+                    console.log('Logo added at x=232mm (right-aligned), y=15mm');
+                    y += 25; // Adjust for logo height
                 } catch (error) {
                     console.error('Error adding logo to PDF:', error.message);
                 }
+            } else {
+                console.log('No logo provided, skipping logo addition');
             }
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(12);
@@ -366,6 +370,8 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
                 item["Storage Instructions"],
                 item["Notes"]
             ]);
+            console.log('Table headers:', tableHeaders);
+            console.log('Table data:', tableData);
 
             doc.autoTable({
                 startY: y,
@@ -409,6 +415,7 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
                 },
                 margin: { left: margin, right: margin }
             });
+            console.log('Table added with 19 columns, total width ~213mm');
 
             // Save the PDF
             console.log('Saving PDF');
