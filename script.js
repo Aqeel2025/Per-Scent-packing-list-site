@@ -3,25 +3,32 @@ console.log('script.js loaded at:', new Date().toISOString());
 // Global variable to store logo data URL
 let companyLogoDataUrl = null;
 
-// Handle logo upload
-document.querySelector('input[name="company_logo"]').addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            companyLogoDataUrl = event.target.result;
-            console.log('Logo uploaded, data URL stored');
-        };
-        reader.readAsDataURL(file);
-    } else {
-        companyLogoDataUrl = null;
-        console.log('No logo uploaded');
-    }
-});
-
 // Set the initial Item No. for the first item on page load and initialize no-expiry checkbox
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM loaded, initializing first item');
+
+    // Handle logo upload
+    const logoInput = document.querySelector('input[name="company_logo"]');
+    if (logoInput) {
+        logoInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    companyLogoDataUrl = event.target.result;
+                    console.log('Logo uploaded, data URL stored');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                companyLogoDataUrl = null;
+                console.log('No logo uploaded');
+            }
+        });
+    } else {
+        console.warn('Warning: input[name="company_logo"] not found in DOM');
+    }
+
+    // Initialize first item
     const firstItem = document.querySelector('.item');
     if (!firstItem) {
         console.error('Error: No .item element found');
@@ -153,7 +160,7 @@ document.getElementById('carrierSelect').addEventListener('change', (e) => {
     }
 });
 
-// Form submission handling for CSV and PDF export
+// Form submission handling for CSV, PDF, and Excel export
 document.getElementById('packingListForm').addEventListener('submit', (e) => {
     console.log('Form submitted');
     e.preventDefault();
@@ -251,20 +258,22 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
         try {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF({
-                orientation: 'portrait',
+                orientation: 'landscape',
                 unit: 'mm',
                 format: 'a4'
             });
 
             // Define margins and starting position
-            const margin = 20;
+            const margin = 15;
+            const pageWidth = 297; // A4 landscape width in mm
             let y = margin;
 
             // Header: Logo and Supplier Info
             if (companyLogoDataUrl) {
                 try {
-                    doc.addImage(companyLogoDataUrl, 'PNG', margin, y, 50, 0); // Auto-scale height, max width 50mm
-                    y += 30; // Adjust for logo height
+                    // Position logo on the right side
+                    doc.addImage(companyLogoDataUrl, 'PNG', pageWidth - margin - 50, y, 50, 0); // 50mm width, auto-scale height
+                    y += 25; // Adjust for logo height (slightly less than portrait to save space)
                 } catch (error) {
                     console.error('Error adding logo to PDF:', error.message);
                 }
@@ -275,34 +284,53 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
             y += 7;
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(10);
-            doc.text(shipmentData["Supplier Address"], margin, y, { maxWidth: 170 });
+            doc.text(shipmentData["Supplier Address"], margin, y, { maxWidth: 120 });
             y += 10;
 
-            // Shipment Details Section
+            // Shipment Details Section (two-column layout)
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(12);
             doc.text('Shipment Details', margin, y);
             y += 7;
             doc.setFont('helvetica', 'normal');
-            doc.setFontSize(10);
-            const shipmentFields = [
+            doc.setFontSize(9);
+            const shipmentFieldsLeft = [
                 { label: 'Ship to Customer:', value: shipmentData["Ship to Customer Name and Details"] },
                 { label: 'Goods Description:', value: shipmentData["Goods Description"] },
                 { label: 'Packing List No:', value: shipmentData["Packing List No"] },
-                { label: 'Invoice No:', value: shipmentData["Invoice No"] },
+                { label: 'Invoice No:', value: shipmentData["Invoice No"] }
+            ];
+            const shipmentFieldsRight = [
                 { label: 'Carrier Name:', value: shipmentData["Carrier Name"] },
                 { label: 'Total Pallets:', value: shipmentData["Total Pallets"] },
                 { label: 'Total Cartons:', value: shipmentData["Total Cartons"] },
                 { label: 'Total Net Weight (kg):', value: shipmentData["Total Net Weight (kg)"] },
                 { label: 'Total Gross Weight (kg):', value: shipmentData["Total Gross Weight (kg)"] }
             ];
-            shipmentFields.forEach(field => {
+            const midPoint = pageWidth / 2;
+            shipmentFieldsLeft.forEach((field, index) => {
                 doc.setFont('helvetica', 'bold');
                 doc.text(field.label, margin, y);
                 doc.setFont('helvetica', 'normal');
-                doc.text(field.value, margin + 50, y, { maxWidth: 120 });
+                doc.text(field.value, margin + 40, y, { maxWidth: 80 });
+                if (index < shipmentFieldsRight.length) {
+                    const rightField = shipmentFieldsRight[index];
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(rightField.label, midPoint, y);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(rightField.value, midPoint + 40, y, { maxWidth: 80 });
+                }
                 y += 7;
             });
+            // Add remaining right-column fields if any
+            for (let i = shipmentFieldsLeft.length; i < shipmentFieldsRight.length; i++) {
+                const rightField = shipmentFieldsRight[i];
+                doc.setFont('helvetica', 'bold');
+                doc.text(rightField.label, midPoint, y);
+                doc.setFont('helvetica', 'normal');
+                doc.text(rightField.value, midPoint + 40, y, { maxWidth: 80 });
+                y += 7;
+            }
             y += 10;
 
             // Itemized Packing List Table
@@ -346,36 +374,38 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
                 theme: 'grid',
                 styles: {
                     font: 'helvetica',
-                    fontSize: 8,
+                    fontSize: 7, // Reduced to fit more columns
                     textColor: [0, 0, 0],
                     lineColor: [0, 0, 0],
-                    lineWidth: 0.1
+                    lineWidth: 0.1,
+                    cellPadding: 1
                 },
                 headStyles: {
                     fillColor: [52, 152, 219], // #3498db
                     textColor: [255, 255, 255],
-                    fontStyle: 'bold'
+                    fontStyle: 'bold',
+                    fontSize: 8
                 },
                 columnStyles: {
-                    0: { cellWidth: 15 },
-                    1: { cellWidth: 10 },
-                    2: { cellWidth: 20 },
-                    3: { cellWidth: 15 },
-                    4: { cellWidth: 15 },
-                    5: { cellWidth: 15 },
-                    6: { cellWidth: 15 },
-                    7: { cellWidth: 15 },
-                    8: { cellWidth: 15 },
-                    9: { cellWidth: 10 },
-                    10: { cellWidth: 10 },
-                    11: { cellWidth: 10 },
-                    12: { cellWidth: 20 },
-                    13: { cellWidth: 15 },
-                    14: { cellWidth: 15 },
-                    15: { cellWidth: 15 },
-                    16: { cellWidth: 15 },
-                    17: { cellWidth: 20 },
-                    18: { cellWidth: 20 }
+                    0: { cellWidth: 12 }, // PO No.
+                    1: { cellWidth: 8 }, // Item No.
+                    2: { cellWidth: 20 }, // Product Name
+                    3: { cellWidth: 12 }, // SKU
+                    4: { cellWidth: 12 }, // EAN Code
+                    5: { cellWidth: 10 }, // HS Code
+                    6: { cellWidth: 10 }, // Batch Code
+                    7: { cellWidth: 12 }, // Mfg Date
+                    8: { cellWidth: 12 }, // Expiry Date
+                    9: { cellWidth: 8 }, // Qty (Units)
+                    10: { cellWidth: 8 }, // Units/Carton
+                    11: { cellWidth: 8 }, // Cartons
+                    12: { cellWidth: 15 }, // Packaging
+                    13: { cellWidth: 12 }, // Net Wt/Carton
+                    14: { cellWidth: 12 }, // Gross Wt/Carton
+                    15: { cellWidth: 10 }, // Origin
+                    16: { cellWidth: 12 }, // Dimensions
+                    17: { cellWidth: 15 }, // Storage Instructions
+                    18: { cellWidth: 15 } // Notes
                 },
                 margin: { left: margin, right: margin }
             });
@@ -387,6 +417,151 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
         } catch (error) {
             console.error('PDF Error:', error.message);
             alert('Error generating PDF: ' + error.message);
+        }
+    } else if (action === 'excel') {
+        console.log('Excel generation started');
+        try {
+            if (typeof XLSX === 'undefined') {
+                console.error('Error: SheetJS (XLSX) is not loaded');
+                throw new Error('SheetJS library is not loaded. Ensure xlsx.full.min.js is in the project directory or CDN is accessible.');
+            }
+
+            // Create a new workbook and worksheet
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.json_to_sheet([], { skipHeader: true });
+
+            // Shipment Details (two-column layout)
+            const shipmentRows = [
+                { A: 'Supplier Name', B: shipmentData["Supplier Name"] },
+                { A: 'Supplier Address', B: shipmentData["Supplier Address"] },
+                { A: 'Ship to Customer Name and Details', B: shipmentData["Ship to Customer Name and Details"] },
+                { A: 'Goods Description', B: shipmentData["Goods Description"] },
+                { A: 'Packing List No', B: shipmentData["Packing List No"] },
+                { A: '', B: '' }, // Spacer row
+                { A: 'Invoice No', B: shipmentData["Invoice No"] },
+                { A: 'Carrier Name', B: shipmentData["Carrier Name"] },
+                { A: 'Total Pallets', B: shipmentData["Total Pallets"] },
+                { A: 'Total Cartons', B: shipmentData["Total Cartons"] },
+                { A: 'Total Net Weight (kg)', B: shipmentData["Total Net Weight (kg)"] },
+                { A: 'Total Gross Weight (kg)', B: shipmentData["Total Gross Weight (kg)"] }
+            ];
+
+            console.log('Shipment Rows:', shipmentRows);
+
+            // Add Shipment Details to worksheet
+            XLSX.utils.sheet_add_json(ws, shipmentRows, { origin: 'A1', skipHeader: true });
+
+            // Itemized Packing List Table
+            const tableHeaders = [
+                "Item No.", "Purchase Order Number", "Product Name", "SKU", "Product EAN Code", 
+                "Product HS Code", "Batch Code", "Manufacturing Date", "Expiry Date", 
+                "Quantity (Units)", "Units per Carton", "Number of Cartons", "Packaging Type", 
+                "Net Weight per Carton (kg)", "Gross Weight per Carton (kg)", 
+                "Product Origin", "Carton Dimensions (LxWxH cm)", "Storage Instructions", "Notes"
+            ];
+            const tableData = itemDataArray.map(item => ({
+                "Item No.": item["Item No."],
+                "Purchase Order Number": item["Purchase Order Number"],
+                "Product Name": item["Product Name"],
+                "SKU": item["SKU"],
+                "Product EAN Code": item["Product EAN Code"],
+                "Product HS Code": item["Product HS Code"],
+                "Batch Code": item["Batch Code"],
+                "Manufacturing Date": item["Manufacturing Date"],
+                "Expiry Date": item["Expiry Date"],
+                "Quantity (Units)": item["Quantity (Units)"],
+                "Units per Carton": item["Units per Carton"],
+                "Number of Cartons": item["Number of Cartons"],
+                "Packaging Type": item["Packaging Type"],
+                "Net Weight per Carton (kg)": item["Net Weight per Carton (kg)"],
+                "Gross Weight per Carton (kg)": item["Gross Weight per Carton (kg)"],
+                "Product Origin": item["Product Origin"],
+                "Carton Dimensions (LxWxH cm)": item["Carton Dimensions (LxWxH cm)"],
+                "Storage Instructions": item["Storage Instructions"],
+                "Notes": item["Notes"]
+            }));
+
+            console.log('Table Data:', tableData);
+
+            // Add table headers and data (starting after shipment details)
+            XLSX.utils.sheet_add_json(ws, [{}], { origin: `A${shipmentRows.length + 1}`, skipHeader: true }); // Spacer row
+            XLSX.utils.sheet_add_json(ws, tableData, { origin: `A${shipmentRows.length + 2}`, header: tableHeaders });
+
+            // Totals Section
+            const totalQuantity = itemDataArray.reduce((sum, item) => sum + (parseFloat(item["Quantity (Units)"]) || 0), 0);
+            const totalCartons = itemDataArray.reduce((sum, item) => sum + (parseFloat(item["Number of Cartons"]) || 0), 0);
+            const totalNetWeight = itemDataArray.reduce((sum, item) => sum + (parseFloat(item["Net Weight per Carton (kg)"]) * parseFloat(item["Number of Cartons"]) || 0), 0);
+            const totalGrossWeight = itemDataArray.reduce((sum, item) => sum + (parseFloat(item["Gross Weight per Carton (kg)"]) * parseFloat(item["Number of Cartons"]) || 0), 0);
+
+            const totalsRows = [
+                { A: 'Totals' },
+                { A: 'Total Quantity (Units)', B: totalQuantity },
+                { A: 'Total Cartons', B: totalCartons },
+                { A: 'Total Net Weight (kg)', B: totalNetWeight },
+                { A: 'Total Gross Weight (kg)', B: totalGrossWeight },
+                { A: '' }, // Spacer row
+                { A: 'Authorized By' },
+                { A: 'Name: ___________________________' },
+                { A: 'Signature: ________________________' },
+                { A: 'Date: ____________________________' }
+            ];
+
+            console.log('Totals Rows:', totalsRows);
+
+            // Add Totals and Authorized By sections
+            XLSX.utils.sheet_add_json(ws, totalsRows, { origin: `A${shipmentRows.length + tableData.length + 3}`, skipHeader: true });
+
+            // Apply basic formatting (column widths)
+            const colWidths = [
+                { wch: 10 }, // Item No.
+                { wch: 20 }, // Purchase Order Number
+                { wch: 30 }, // Product Name
+                { wch: 20 }, // SKU
+                { wch: 20 }, // Product EAN Code
+                { wch: 15 }, // Product HS Code
+                { wch: 15 }, // Batch Code
+                { wch: 15 }, // Manufacturing Date
+                { wch: 15 }, // Expiry Date
+                { wch: 15 }, // Quantity (Units)
+                { wch: 15 }, // Units per Carton
+                { wch: 15 }, // Number of Cartons
+                { wch: 20 }, // Packaging Type
+                { wch: 20 }, // Net Weight per Carton (kg)
+                { wch: 20 }, // Gross Weight per Carton (kg)
+                { wch: 15 }, // Product Origin
+                { wch: 20 }, // Carton Dimensions (LxWxH cm)
+                { wch: 30 }, // Storage Instructions
+                { wch: 30 }  // Notes
+            ];
+            ws['!cols'] = colWidths;
+
+            // Apply bold formatting during data addition
+            const boldCells = [
+                'A1', 'A2', 'A3', 'A4', 'A5', // Left column shipment details
+                'B7', 'B8', 'B9', 'B10', 'B11', 'B12', // Right column shipment details
+                `A${shipmentRows.length + 2}`, // Table headers
+                `A${shipmentRows.length + tableData.length + 3}`, // Totals
+                `A${shipmentRows.length + tableData.length + 8}` // Authorized By
+            ];
+
+            boldCells.forEach(cell => {
+                if (ws[cell]) {
+                    ws[cell].s = { font: { bold: true } };
+                } else {
+                    console.warn(`Cell ${cell} does not exist in worksheet`);
+                }
+            });
+
+            // Add worksheet to workbook
+            XLSX.utils.book_append_sheet(wb, ws, 'Packing List');
+
+            // Generate and download Excel file
+            console.log('Generating Excel file');
+            XLSX.write(wb, `packing_list_${shipmentData["Packing List No"] || 'export'}.xlsx`);
+            console.log('Excel download triggered');
+        } catch (error) {
+            console.error('Excel Error:', error.message);
+            alert('Error generating Excel: ' + error.message);
         }
     }
 });
