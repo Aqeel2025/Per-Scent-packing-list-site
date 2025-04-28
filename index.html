@@ -1,242 +1,81 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Packing List Generator</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            box-sizing: border-box;
-        }
-        .form-group {
-            display: flex;
-            align-items: flex-start;
-            margin-bottom: 15px;
-            width: 100%;
-            max-width: 600px;
-        }
-        .item {
-            border: 1px solid #ccc;
-            padding: 10px;
-            margin-bottom: 10px;
-            width: 100%;
-            max-width: 600px;
-            box-sizing: border-box;
-        }
-        label {
-            width: 150px;
-            flex-shrink: 0;
-            padding-top: 5px;
-        }
-        input, textarea, select {
-            width: 200px;
-            flex-grow: 1;
-            box-sizing: border-box;
-        }
-        textarea {
-            height: 60px;
-            resize: vertical;
-        }
-        button {
-            margin: 10px 0;
-            padding: 5px 10px;
-        }
-        #otherCarrierLabel {
-            display: none;
-        }
-        .remove-item {
-            background: #ff4d4d;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        #items {
-            width: 100%;
-            max-width: 600px;
-        }
-        h1, h2 {
-            margin-bottom: 20px;
-        }
-    </style>
-    <!-- SheetJS for CSV -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <!-- jsPDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAahn1mZWHj+r1dpSanUehP7CHRpbQ==" crossorigin="anonymous"></script>
-    <!-- jsPDF-AutoTable -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" integrity="sha512-GYv4qDawPP+0lD9s8bB6aVIZV4K2n/9wB5r7y2NBNksojC2ZEzW3H+4u2cQt7M2NCh3JjkRBsRGGvPAS1S43kbQ==" crossorigin="anonymous"></script>
-    <!-- Fixed Fallbacks for Chrome -->
-    <script>
-        console.log('Checking jsPDF and jsPDF-AutoTable loading in browser:', navigator.userAgent);
-        // Fallback for jsPDF
-        if (!window.jspdf || !window.jspdf.jsPDF) {
-            console.warn('jsPDF CDN failed, loading local fallback');
-            document.write('<script src="lib/jspdf.umd.min.js"></script>');
-        }
-        // Fallback for jsPDF-AutoTable
-        if (!window.jspdf || !window.jspdf.jsPDF.prototype.autoTable) {
-            console.warn('jsPDF-AutoTable CDN failed, loading local fallback');
-            document.write('<script src="lib/jspdf.plugin.autotable.min.js"></script>');
-        }
-        console.log('jsPDF and jsPDF-AutoTable loading check complete');
-    </script>
-    <!-- Application script with cache-busting -->
-    <script src="script.js?v=11"></script>
-</head>
-<body>
-    <h1>Packing List Generator</h1>
-    <form id="packingListForm">
-        <h2>Shipment Details</h2>
-        <div class="form-group">
-            <label>Supplier Name:</label>
-            <input type="text" name="supplier_name" required>
-        </div>
-        <div class="form-group">
-            <label>Supplier Address:</label>
-            <textarea name="supplier_address" required></textarea>
-        </div>
-        <div class="form-group">
-            <label>Ship to Customer:</label>
-            <textarea name="ship_to_customer" required></textarea>
-        </div>
-        <div class="form-group">
-            <label>Goods Description:</label>
-            <textarea name="goods_description" required></textarea>
-        </div>
-        <div class="form-group">
-            <label>Packing List No:</label>
-            <input type="text" name="packing_list_no" required>
-        </div>
-        <div class="form-group">
-            <label>Invoice No:</label>
-            <input type="text" name="invoice_no" required>
-        </div>
-        <div class="form-group">
-            <label>Carrier Name:</label>
-            <select name="carrier_name" id="carrierSelect" required>
-                <option value="">Select Carrier</option>
-                <option value="Own Collection">Own Collection</option>
-                <option value="Other">Other</option>
-            </select>
-        </div>
-        <div class="form-group" id="otherCarrierLabel">
-            <label>Other Carrier:</label>
-            <input type="text" name="other_carrier">
-        </div>
-        <div class="form-group">
-            <label>Total Pallets:</label>
-            <input type="number" name="total_pallets" required>
-        </div>
-        <div class="form-group">
-            <label>Total Cartons:</label>
-            <input type="number" name="total_cartons" required>
-        </div>
-        <div class="form-group">
-            <label>Total Net Weight (kg):</label>
-            <input type="number" name="total_net_weight" step="0.01" required>
-        </div>
-        <div class="form-group">
-            <label>Total Gross Weight (kg):</label>
-            <input type="number" name="total_gross_weight" step="0.01" required>
-        </div>
-        <div class="form-group">
-            <label>Company Logo:</label>
-            <input type="file" name="company_logo" accept="image/png,image/jpeg">
-        </div>
-
-        <h2>Itemized Packing List</h2>
-        <div id="items">
-            <div class="item">
-                <div class="form-group">
-                    <label>Purchase Order Number:</label>
-                    <input type="text" name="purchase_order_number[]" required>
-                </div>
-                <div class="form-group">
-                    <label>Item No.:</label>
-                    <input type="number" name="item_no[]" readonly>
-                </div>
-                <div class="form-group">
-                    <label>Product Name:</label>
-                    <input type="text" name="product_name[]" required>
-                </div>
-                <div class="form-group">
-                    <label>SKU:</label>
-                    <input type="text" name="sku[]" required>
-                </div>
-                <div class="form-group">
-                    <label>Product EAN Code:</label>
-                    <input type="text" name="ean_code[]" required>
-                </div>
-                <div class="form-group">
-                    <label>Product HS Code:</label>
-                    <input type="text" name="hs_code[]" required>
-                </div>
-                <div class="form-group">
-                    <label>Batch Code:</label>
-                    <input type="text" name="batch_code[]">
-                </div>
-                <div class="form-group">
-                    <label>Manufacturing Date:</label>
-                    <input type="date" name="manufacturing_date[]">
-                </div>
-                <div class="form-group">
-                    <label>Expiry Date:</label>
-                    <input type="date" name="expiry_date[]" required>
-                    <label>No Expiry:</label>
-                    <input type="checkbox" name="no_expiry[]">
-                </div>
-                <div class="form-group">
-                    <label>Quantity (Units):</label>
-                    <input type="number" name="quantity[]" required>
-                </div>
-                <div class="form-group">
-                    <label>Units per Carton:</label>
-                    <input type="number" name="units_per_carton[]" required>
-                </div>
-                <div class="form-group">
-                    <label>Number of Cartons:</label>
-                    <input type="number" name="number_of_cartons[]" required>
-                </div>
-                <div class="form-group">
-                    <label>Packaging Type:</label>
-                    <select name="packaging_type[]" required>
-                        <option value="">Select Packaging</option>
-                        <option value="Glass Bottle, Individual Box">Glass Bottle, Individual Box</option>
-                        <option value="Plastic Bottle">Plastic Bottle</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Net Weight per Carton (kg):</label>
-                    <input type="number" name="net_weight_carton[]" step="0.01" required>
-                </div>
-                <div class="form-group">
-                    <label>Gross Weight per Carton (kg):</label>
-                    <input type="number" name="gross_weight_carton[]" step="0.01" required>
-                </div>
-                <div class="form-group">
-                    <label>Product Origin:</label>
-                    <input type="text" name="product_origin[]" required>
-                </div>
-                <div class="form-group">
-                    <label>Carton Dimensions (LxWxH cm):</label>
-                    <input type="text" name="carton_dimensions[]" required>
-                </div>
-                <div class="form-group">
-                    <label>Storage Instructions:</label>
-                    <textarea name="storage_instructions[]" required></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Notes:</label>
-                    <textarea name="notes[]"></textarea>
-                </div>
-                <button type="button" class="remove-item">Remove Item</button>
-            </div>
-        </div>
-        <button type="button" id="addItem">Add Another Item</button>
-        <br>
-        <button type="submit" value="csv">Generate Packing List (CSV)</button>
-        <button type="submit" value="pdf">Generate Packing List (PDF)</button>
-    </form>
-</body>
-</html>
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f4f4f4;
+}
+header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+h1 {
+    color: #2c3e50;
+}
+h2 {
+    color: #34495e;
+    margin-top: 20px;
+}
+.main-container {
+    max-width: 1100px;
+    margin: 0 auto;
+}
+form {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+label {
+    display: block;
+    margin: 10px 0 5px;
+    font-weight: bold;
+}
+input, select, textarea {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+input[type="checkbox"] {
+    width: auto;
+    vertical-align: middle;
+    margin-left: 10px;
+}
+textarea {
+    height: 80px;
+}
+.item {
+    border-bottom: 1px solid #eee;
+    padding: 10px 0;
+}
+button {
+    padding: 10px 20px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 10px 5px;
+}
+button.remove-item {
+    background-color: #e74c3c;
+}
+button:hover {
+    opacity: 0.9;
+}
+#addItem {
+    background-color: "Expiry (Not Applicable)": item.querySelector('input[name="no_expiry[]"]').checked ? 'Not Applicable' : '',
+}
+@media (max-width: 800px) {
+    .main-container {
+        margin: 0 10px;
+    }
+    form {
+        padding: 10px;
+    }
+    input, select, textarea {
+        font-size: 14px;
+    }
+}
