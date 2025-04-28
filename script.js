@@ -104,6 +104,12 @@ document.getElementById('addItem').addEventListener('click', () => {
             }
         });
 
+        // Ensure new item has consistent styles
+        newItem.className = 'item';
+        newItem.style.width = '100%';
+        newItem.style.maxWidth = '600px';
+        newItem.style.boxSizing = 'border-box';
+
         // Set the Item No. for the new item
         const currentItemCount = itemsContainer.querySelectorAll('.item').length;
         const newItemNoInput = newItem.querySelector('input[name="item_no[]"]');
@@ -143,6 +149,10 @@ document.addEventListener('click', (e) => {
                     itemNoInput.value = index + 1;
                     console.log(`Renumbered item to ${index + 1}`);
                 }
+                // Ensure consistent styles
+                item.style.width = '100%';
+                item.style.maxWidth = '600px';
+                item.style.boxSizing = 'border-box';
             });
         } else {
             alert('At least one item is required.');
@@ -157,7 +167,7 @@ document.getElementById('carrierSelect').addEventListener('change', (e) => {
     const otherCarrierLabel = document.getElementById('otherCarrierLabel');
     const otherCarrierInput = otherCarrierLabel.querySelector('input');
     if (e.target.value === 'Other') {
-        otherCarrierLabel.style.display = 'block';
+        otherCarrierLabel.style.display = 'flex';
         otherCarrierInput.required = true;
         console.log('Showed other carrier input');
     } else {
