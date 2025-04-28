@@ -1,6 +1,6 @@
 console.log('script.js loaded at:', new Date().toISOString());
 
-// Set the initial Item No. for the first item on page load
+// Set the initial Item No. for the first item on page load and initialize no-expiry checkbox
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM loaded, initializing first item');
     const firstItem = document.querySelector('.item');
@@ -16,9 +16,34 @@ document.addEventListener('DOMContentLoaded', () => {
     firstItemNoInput.value = 1;
     firstItemNoInput.readOnly = true;
     console.log('Set first item Item No. to 1');
+
+    // Initialize no-expiry checkbox for the first item
+    initializeNoExpiryCheckbox(firstItem);
 });
 
-// Add item functionality with auto-incrementing Item No.
+// Function to initialize no-expiry checkbox behavior
+function initializeNoExpiryCheckbox(item) {
+    const noExpiryCheckbox = item.querySelector('input[name="no_expiry[]"]');
+    const expiryDateInput = item.querySelector('input[name="expiry_date[]"]');
+    if (!noExpiryCheckbox || !expiryDateInput) {
+        console.error('Error: No expiry checkbox or expiry date input found in item');
+        return;
+    }
+    noExpiryCheckbox.addEventListener('change', () => {
+        if (noExpiryCheckbox.checked) {
+            expiryDateInput.disabled = true;
+            expiryDateInput.required = false;
+            expiryDateInput.value = '';
+            console.log('Expiry date disabled for item');
+        } else {
+            expiryDateInput.disabled = false;
+            expiryDateInput.required = true;
+            console.log('Expiry date enabled for item');
+        }
+    });
+}
+
+// Add item functionality with auto-incrementing Item No. and no-expiry checkbox initialization
 document.getElementById('addItem').addEventListener('click', () => {
     console.log('Add Another Item clicked');
     const itemsContainer = document.getElementById('items');
@@ -40,6 +65,14 @@ document.getElementById('addItem').addEventListener('click', () => {
         } else if (input.name !== 'item_no[]') {
             input.value = '';
         }
+        // Reset checkbox and expiry date states
+        if (input.name === 'no_expiry[]') {
+            input.checked = false;
+        }
+        if (input.name === 'expiry_date[]') {
+            input.disabled = false;
+            input.required = true;
+        }
     });
 
     // Set the Item No. for the new item
@@ -55,6 +88,9 @@ document.getElementById('addItem').addEventListener('click', () => {
 
     itemsContainer.appendChild(newItem);
     console.log('Appended new item to #items');
+
+    // Initialize no-expiry checkbox for the new item
+    initializeNoExpiryCheckbox(newItem);
 });
 
 // Remove item functionality with renumbering
@@ -141,11 +177,14 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
                 "Product HS Code", "Batch Code", "Manufacturing Date", "Expiry Date", "Quantity (Units)", 
                 "Units per Carton", "Number of Cartons", "Packaging Type", 
                 "Net Weight per Carton (kg)", "Gross Weight per Carton (kg)", 
+                "Product Origin", "Carton Dimensions (LxWxH cm)",
                 "Storage Instructions", "Notes"
             ];
 
             items.forEach((item, index) => {
                 console.log(`Processing item ${index + 1}`);
+                const noExpiryCheckbox = item.querySelector('input[name="no_expiry[]"]');
+                const expiryDateInput = item.querySelector('input[name="expiry_date[]"]');
                 const itemData = {
                     "Purchase Order Number": item.querySelector('input[name="purchase_order_number[]"]').value || '',
                     "Item No.": item.querySelector('input[name="item_no[]"]').value || '',
@@ -155,13 +194,15 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
                     "Product HS Code": item.querySelector('input[name="hs_code[]"]').value || '',
                     "Batch Code": item.querySelector('input[name="batch_code[]"]').value || '',
                     "Manufacturing Date": item.querySelector('input[name="manufacturing_date[]"]').value || '',
-                    "Expiry Date": item.querySelector('input[name="expiry_date[]"]').value || '',
+                    "Expiry Date": noExpiryCheckbox.checked ? 'Not Applicable' : (expiryDateInput.value || ''),
                     "Quantity (Units)": item.querySelector('input[name="quantity[]"]').value || '',
                     "Units per Carton": item.querySelector('input[name="units_per_carton[]"]').value || '',
                     "Number of Cartons": item.querySelector('input[name="number_of_cartons[]"]').value || '',
                     "Packaging Type": item.querySelector('select[name="packaging_type[]"]').value || '',
                     "Net Weight per Carton (kg)": item.querySelector('input[name="net_weight_carton[]"]').value || '',
                     "Gross Weight per Carton (kg)": item.querySelector('input[name="gross_weight_carton[]"]').value || '',
+                    "Product Origin": item.querySelector('input[name="product_origin[]"]').value || '',
+                    "Carton Dimensions (LxWxH cm)": item.querySelector('input[name="carton_dimensions[]"]').value || '',
                     "Storage Instructions": item.querySelector('textarea[name="storage_instructions[]"]').value || '',
                     "Notes": item.querySelector('textarea[name="notes[]"]').value || ''
                 };
