@@ -43,9 +43,6 @@ input[type="checkbox"] {
     vertical-align: middle;
     margin-left: 10px;
 }
-input[type="file"] {
-    padding: 3px;
-}
 textarea {
     height: 80px;
 }
@@ -65,17 +62,11 @@ button {
 button.remove-item {
     background-color: #e74c3c;
 }
-button[name="action"][value="pdf"] {
-    background-color: #27ae60;
-}
-button[name="action"][value="excel"] {
-    background-color: #8e44ad;
-}
 button:hover {
     opacity: 0.9;
 }
 #addItem {
-    background-color: #2ecc71;
+    background-color: "Expiry (Not Applicable)": item.querySelector('input[name="no_expiry[]"]').checked ? 'Not Applicable' : '',
 }
 @media (max-width: 800px) {
     .main-container {
