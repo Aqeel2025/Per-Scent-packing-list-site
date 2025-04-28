@@ -5,14 +5,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Packing List Generator</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .form-group { margin-bottom: 15px; }
-        .item { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
-        label { display: inline-block; width: 150px; }
-        input, textarea, select { width: 200px; }
-        button { margin: 10px 0; }
-        #otherCarrierLabel { display: none; }
-        textarea { vertical-align: top; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            box-sizing: border-box;
+        }
+        .form-group {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            width: 100%;
+            max-width: 600px;
+        }
+        .item {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+            width: 100%;
+            max-width: 600px;
+            box-sizing: border-box;
+        }
+        label {
+            width: 150px;
+            flex-shrink: 0;
+            padding-top: 5px;
+        }
+        input, textarea, select {
+            width: 200px;
+            flex-grow: 1;
+            box-sizing: border-box;
+        }
+        textarea {
+            height: 60px;
+            resize: vertical;
+        }
+        button {
+            margin: 10px 0;
+            padding: 5px 10px;
+        }
+        #otherCarrierLabel {
+            display: none;
+        }
+        .remove-item {
+            background: #ff4d4d;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #items {
+            width: 100%;
+            max-width: 600px;
+        }
+        h1, h2 {
+            margin-bottom: 20px;
+        }
     </style>
     <!-- SheetJS for CSV -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -20,7 +66,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" integrity="sha512-qZvrmS2ekKPF2mSznTQsxqPgnpkI4DNTlrdUmTzrDgektczlKNRRhy5X5AAahn1mZWHj+r1dpSanUehP7CHRpbQ==" crossorigin="anonymous"></script>
     <!-- jsPDF-AutoTable -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" integrity="sha512-GYv4qDawPP+0lD9s8bB6aVIZV4K2n/9wB5r7y2NBNksojC2ZEzW3H+4u2cQt7M2NCh3JjkRBsRGGvPAS1S43kbQ==" crossorigin="anonymous"></script>
-    <!-- Simplified Fallbacks for Chrome -->
+    <!-- Fixed Fallbacks for Chrome -->
     <script>
         console.log('Checking jsPDF and jsPDF-AutoTable loading in browser:', navigator.userAgent);
         // Fallback for jsPDF
@@ -36,7 +82,7 @@
         console.log('jsPDF and jsPDF-AutoTable loading check complete');
     </script>
     <!-- Application script with cache-busting -->
-    <script src="script.js?v=9"></script>
+    <script src="script.js?v=10"></script>
 </head>
 <body>
     <h1>Packing List Generator</h1>
@@ -118,7 +164,7 @@
                     <label>SKU:</label>
                     <input type="text" name="sku[]" required>
                 </div>
-                <div W class="form-group">
+                <div class="form-group">
                     <label>Product EAN Code:</label>
                     <input type="text" name="ean_code[]" required>
                 </div>
