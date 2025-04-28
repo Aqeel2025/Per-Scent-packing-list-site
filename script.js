@@ -3,25 +3,32 @@ console.log('script.js loaded at:', new Date().toISOString());
 // Global variable to store logo data URL
 let companyLogoDataUrl = null;
 
-// Handle logo upload
-document.querySelector('input[name="company_logo"]').addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            companyLogoDataUrl = event.target.result;
-            console.log('Logo uploaded, data URL stored');
-        };
-        reader.readAsDataURL(file);
-    } else {
-        companyLogoDataUrl = null;
-        console.log('No logo uploaded');
-    }
-});
-
 // Set the initial Item No. for the first item on page load and initialize no-expiry checkbox
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM loaded, initializing first item');
+
+    // Handle logo upload
+    const logoInput = document.querySelector('input[name="company_logo"]');
+    if (logoInput) {
+        logoInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    companyLogoDataUrl = event.target.result;
+                    console.log('Logo uploaded, data URL stored');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                companyLogoDataUrl = null;
+                console.log('No logo uploaded');
+            }
+        });
+    } else {
+        console.warn('Warning: input[name="company_logo"] not found in DOM');
+    }
+
+    // Initialize first item
     const firstItem = document.querySelector('.item');
     if (!firstItem) {
         console.error('Error: No .item element found');
@@ -222,7 +229,7 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
                 "Total Pallets", "Total Cartons", "Total Net Weight (kg)", "Total Gross Weight (kg)",
                 "Purchase Order Number", "Item No.", "Product Name", "SKU", "Product EAN Code", 
                 "Product HS Code", "Batch Code", "Manufacturing Date", "Expiry Date", "Quantity (Units)", 
-                "Units per Cartoon", "Number of Cartons", "Packaging Type", 
+                "Units per Carton", "Number of Cartons", "Packaging Type", 
                 "Net Weight per Carton (kg)", "Gross Weight per Carton (kg)", 
                 "Product Origin", "Carton Dimensions (LxWxH cm)",
                 "Storage Instructions", "Notes"
@@ -416,6 +423,8 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
                 { A: 'Total Gross Weight (kg)', B: shipmentData["Total Gross Weight (kg)"] }
             ];
 
+            console.log('Shipment Rows:', shipmentRows);
+
             // Add Shipment Details to worksheet
             XLSX.utils.sheet_add_json(ws, shipmentRows, { origin: 'A1', skipHeader: true });
 
@@ -449,8 +458,11 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
                 "Notes": item["Notes"]
             }));
 
+            console.log('Table Data:', tableData);
+
             // Add table headers and data (starting after shipment details)
-            XLSX.utils.sheet_add_json(ws, [{}, ...tableData], { origin: `A${shipmentRows.length + 2}`, header: tableHeaders });
+            XLSX.utils.sheet_add_json(ws, [{}], { origin: `A${shipmentRows.length + 1}`, skipHeader: true }); // Spacer row
+            XLSX.utils.sheet_add_json(ws, tableData, { origin: `A${shipmentRows.length + 2}`, header: tableHeaders });
 
             // Totals Section
             const totalQuantity = itemDataArray.reduce((sum, item) => sum + (parseFloat(item["Quantity (Units)"]) || 0), 0);
@@ -471,10 +483,12 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
                 { A: 'Date: ____________________________' }
             ];
 
+            console.log('Totals Rows:', totalsRows);
+
             // Add Totals and Authorized By sections
             XLSX.utils.sheet_add_json(ws, totalsRows, { origin: `A${shipmentRows.length + tableData.length + 3}`, skipHeader: true });
 
-            // Apply basic formatting (bold headers, column widths)
+            // Apply basic formatting (column widths)
             const colWidths = [
                 { wch: 10 }, // Item No.
                 { wch: 20 }, // Purchase Order Number
@@ -498,7 +512,7 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
             ];
             ws['!cols'] = colWidths;
 
-            // Bold headers and section titles
+            // Apply bold formatting during data addition
             const boldCells = [
                 'A1', 'A2', 'A3', 'A4', 'A5', // Left column shipment details
                 'B7', 'B8', 'B9', 'B10', 'B11', 'B12', // Right column shipment details
@@ -506,9 +520,12 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
                 `A${shipmentRows.length + tableData.length + 3}`, // Totals
                 `A${shipmentRows.length + tableData.length + 8}` // Authorized By
             ];
+
             boldCells.forEach(cell => {
                 if (ws[cell]) {
                     ws[cell].s = { font: { bold: true } };
+                } else {
+                    console.warn(`Cell ${cell} does not exist in worksheet`);
                 }
             });
 
