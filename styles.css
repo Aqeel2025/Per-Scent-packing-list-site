@@ -38,6 +38,11 @@ input, select, textarea {
     border-radius: 4px;
     box-sizing: border-box;
 }
+input[type="checkbox"] {
+    width: auto;
+    vertical-align: middle;
+    margin-left: 10px;
+}
 textarea {
     height: 80px;
 }
@@ -61,7 +66,7 @@ button:hover {
     opacity: 0.9;
 }
 #addItem {
-    background-color: #2ecc71;
+    background-color: "Expiry (Not Applicable)": item.querySelector('input[name="no_expiry[]"]').checked ? 'Not Applicable' : '',
 }
 @media (max-width: 800px) {
     .main-container {
