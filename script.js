@@ -258,20 +258,22 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
         try {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF({
-                orientation: 'portrait',
+                orientation: 'landscape',
                 unit: 'mm',
                 format: 'a4'
             });
 
             // Define margins and starting position
-            const margin = 20;
+            const margin = 15;
+            const pageWidth = 297; // A4 landscape width in mm
             let y = margin;
 
             // Header: Logo and Supplier Info
             if (companyLogoDataUrl) {
                 try {
-                    doc.addImage(companyLogoDataUrl, 'PNG', margin, y, 50, 0); // Auto-scale height, max width 50mm
-                    y += 30; // Adjust for logo height
+                    // Position logo on the right side
+                    doc.addImage(companyLogoDataUrl, 'PNG', pageWidth - margin - 50, y, 50, 0); // 50mm width, auto-scale height
+                    y += 25; // Adjust for logo height (slightly less than portrait to save space)
                 } catch (error) {
                     console.error('Error adding logo to PDF:', error.message);
                 }
@@ -282,34 +284,53 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
             y += 7;
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(10);
-            doc.text(shipmentData["Supplier Address"], margin, y, { maxWidth: 170 });
+            doc.text(shipmentData["Supplier Address"], margin, y, { maxWidth: 120 });
             y += 10;
 
-            // Shipment Details Section
+            // Shipment Details Section (two-column layout)
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(12);
             doc.text('Shipment Details', margin, y);
             y += 7;
             doc.setFont('helvetica', 'normal');
-            doc.setFontSize(10);
-            const shipmentFields = [
+            doc.setFontSize(9);
+            const shipmentFieldsLeft = [
                 { label: 'Ship to Customer:', value: shipmentData["Ship to Customer Name and Details"] },
                 { label: 'Goods Description:', value: shipmentData["Goods Description"] },
                 { label: 'Packing List No:', value: shipmentData["Packing List No"] },
-                { label: 'Invoice No:', value: shipmentData["Invoice No"] },
+                { label: 'Invoice No:', value: shipmentData["Invoice No"] }
+            ];
+            const shipmentFieldsRight = [
                 { label: 'Carrier Name:', value: shipmentData["Carrier Name"] },
                 { label: 'Total Pallets:', value: shipmentData["Total Pallets"] },
                 { label: 'Total Cartons:', value: shipmentData["Total Cartons"] },
                 { label: 'Total Net Weight (kg):', value: shipmentData["Total Net Weight (kg)"] },
                 { label: 'Total Gross Weight (kg):', value: shipmentData["Total Gross Weight (kg)"] }
             ];
-            shipmentFields.forEach(field => {
+            const midPoint = pageWidth / 2;
+            shipmentFieldsLeft.forEach((field, index) => {
                 doc.setFont('helvetica', 'bold');
                 doc.text(field.label, margin, y);
                 doc.setFont('helvetica', 'normal');
-                doc.text(field.value, margin + 50, y, { maxWidth: 120 });
+                doc.text(field.value, margin + 40, y, { maxWidth: 80 });
+                if (index < shipmentFieldsRight.length) {
+                    const rightField = shipmentFieldsRight[index];
+                    doc.setFont('helvetica', 'bold');
+                    doc.text(rightField.label, midPoint, y);
+                    doc.setFont('helvetica', 'normal');
+                    doc.text(rightField.value, midPoint + 40, y, { maxWidth: 80 });
+                }
                 y += 7;
             });
+            // Add remaining right-column fields if any
+            for (let i = shipmentFieldsLeft.length; i < shipmentFieldsRight.length; i++) {
+                const rightField = shipmentFieldsRight[i];
+                doc.setFont('helvetica', 'bold');
+                doc.text(rightField.label, midPoint, y);
+                doc.setFont('helvetica', 'normal');
+                doc.text(rightField.value, midPoint + 40, y, { maxWidth: 80 });
+                y += 7;
+            }
             y += 10;
 
             // Itemized Packing List Table
@@ -353,36 +374,38 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
                 theme: 'grid',
                 styles: {
                     font: 'helvetica',
-                    fontSize: 8,
+                    fontSize: 7, // Reduced to fit more columns
                     textColor: [0, 0, 0],
                     lineColor: [0, 0, 0],
-                    lineWidth: 0.1
+                    lineWidth: 0.1,
+                    cellPadding: 1
                 },
                 headStyles: {
                     fillColor: [52, 152, 219], // #3498db
                     textColor: [255, 255, 255],
-                    fontStyle: 'bold'
+                    fontStyle: 'bold',
+                    fontSize: 8
                 },
                 columnStyles: {
-                    0: { cellWidth: 15 },
-                    1: { cellWidth: 10 },
-                    2: { cellWidth: 20 },
-                    3: { cellWidth: 15 },
-                    4: { cellWidth: 15 },
-                    5: { cellWidth: 15 },
-                    6: { cellWidth: 15 },
-                    7: { cellWidth: 15 },
-                    8: { cellWidth: 15 },
-                    9: { cellWidth: 10 },
-                    10: { cellWidth: 10 },
-                    11: { cellWidth: 10 },
-                    12: { cellWidth: 20 },
-                    13: { cellWidth: 15 },
-                    14: { cellWidth: 15 },
-                    15: { cellWidth: 15 },
-                    16: { cellWidth: 15 },
-                    17: { cellWidth: 20 },
-                    18: { cellWidth: 20 }
+                    0: { cellWidth: 12 }, // PO No.
+                    1: { cellWidth: 8 }, // Item No.
+                    2: { cellWidth: 20 }, // Product Name
+                    3: { cellWidth: 12 }, // SKU
+                    4: { cellWidth: 12 }, // EAN Code
+                    5: { cellWidth: 10 }, // HS Code
+                    6: { cellWidth: 10 }, // Batch Code
+                    7: { cellWidth: 12 }, // Mfg Date
+                    8: { cellWidth: 12 }, // Expiry Date
+                    9: { cellWidth: 8 }, // Qty (Units)
+                    10: { cellWidth: 8 }, // Units/Carton
+                    11: { cellWidth: 8 }, // Cartons
+                    12: { cellWidth: 15 }, // Packaging
+                    13: { cellWidth: 12 }, // Net Wt/Carton
+                    14: { cellWidth: 12 }, // Gross Wt/Carton
+                    15: { cellWidth: 10 }, // Origin
+                    16: { cellWidth: 12 }, // Dimensions
+                    17: { cellWidth: 15 }, // Storage Instructions
+                    18: { cellWidth: 15 } // Notes
                 },
                 margin: { left: margin, right: margin }
             });
