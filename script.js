@@ -177,7 +177,7 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
         "Invoice No": document.querySelector('input[name="invoice_no"]').value || '',
         "Carrier Name": document.querySelector('select[name="carrier_name"]').value === 'Other' 
             ? (document.querySelector('input[name="other_carrier"]').value || '')
-            : document.query venne('select[name="carrier_name"]').value || '',
+            : document.querySelector('select[name="carrier_name"]').value || '',
         "Total Pallets": document.querySelector('input[name="total_pallets"]').value || '',
         "Total Cartons": document.querySelector('input[name="total_cartons"]').value || '',
         "Total Net Weight (kg)": document.querySelector('input[name="total_net_weight"]').value || '',
@@ -215,6 +215,7 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
         };
         itemDataArray.push(itemData);
     });
+    console.log('Item Data Array:', itemDataArray);
 
     if (action === 'csv') {
         console.log('CSV generation started');
@@ -256,6 +257,12 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
     } else if (action === 'pdf') {
         console.log('PDF generation started');
         try {
+            // Check if jsPDF and autoTable are available
+            if (!window.jspdf || !window.jspdf.jsPDF || !window.jspdf.jsPDF.prototype.autoTable) {
+                throw new Error('jsPDF or jsPDF-AutoTable library not loaded. Ensure CDN scripts are accessible.');
+            }
+            console.log('jsPDF and autoTable libraries confirmed loaded');
+
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF({
                 orientation: 'landscape',
@@ -272,10 +279,9 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
             // Header: Logo and Supplier Info
             if (companyLogoDataUrl) {
                 try {
-                    // Position logo on the right side
                     doc.addImage(companyLogoDataUrl, 'PNG', pageWidth - margin - 50, y, 50, 0); // 50mm width, auto-scale height
                     console.log('Logo added at x=232mm (right-aligned), y=15mm');
-                    y += 25; // Adjust for logo height
+                    y += 25;
                 } catch (error) {
                     console.error('Error adding logo to PDF:', error.message);
                 }
@@ -284,11 +290,11 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
             }
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(12);
-            doc.text(shipmentData["Supplier Name"], margin, y);
+            doc.text(shipmentData["Supplier Name"] || 'N/A', margin, y);
             y += 7;
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(10);
-            doc.text(shipmentData["Supplier Address"], margin, y, { maxWidth: 120 });
+            doc.text(shipmentData["Supplier Address"] || 'N/A', margin, y, { maxWidth: 120 });
             y += 10;
 
             // Shipment Details Section (two-column layout)
@@ -299,40 +305,39 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(9);
             const shipmentFieldsLeft = [
-                { label: 'Ship to Customer:', value: shipmentData["Ship to Customer Name and Details"] },
-                { label: 'Goods Description:', value: shipmentData["Goods Description"] },
-                { label: 'Packing List No:', value: shipmentData["Packing List No"] },
-                { label: 'Invoice No:', value: shipmentData["Invoice No"] }
+                { label: 'Ship to Customer:', value: shipmentData["Ship to Customer Name and Details"] || 'N/A' },
+                { label: 'Goods Description:', value: shipmentData["Goods Description"] || 'N/A' },
+                { label: 'Packing List No:', value: shipmentData["Packing List No"] || 'N/A' },
+                { label: 'Invoice No:', value: shipmentData["Invoice No"] || 'N/A' }
             ];
             const shipmentFieldsRight = [
-                { label: 'Carrier Name:', value: shipmentData["Carrier Name"] },
-                { label: 'Total Pallets:', value: shipmentData["Total Pallets"] },
-                { label: 'Total Cartons:', value: shipmentData["Total Cartons"] },
-                { label: 'Total Net Weight (kg):', value: shipmentData["Total Net Weight (kg)"] },
-                { label: 'Total Gross Weight (kg):', value: shipmentData["Total Gross Weight (kg)"] }
+                { label: 'Carrier Name:', value: shipmentData["Carrier Name"] || 'N/A' },
+                { label: 'Total Pallets:', value: shipmentData["Total Pallets"] || 'N/A' },
+                { label: 'Total Cartons:', value: shipmentData["Total Cartons"] || 'N/A' },
+                { label: 'Total Net Weight (kg):', value: shipmentData["Total Net Weight (kg)"] || 'N/A' },
+                { label: 'Total Gross Weight (kg):', value: shipmentData["Total Gross Weight (kg)"] || 'N/A' }
             ];
             const midPoint = pageWidth / 2;
             shipmentFieldsLeft.forEach((field, index) => {
                 doc.setFont('helvetica', 'bold');
                 doc.text(field.label, margin, y);
                 doc.setFont('helvetica', 'normal');
-                doc.text(field.value, margin + 40, y, { maxWidth: 80 });
+                doc.text(String(field.value), margin + 40, y, { maxWidth: 80 });
                 if (index < shipmentFieldsRight.length) {
                     const rightField = shipmentFieldsRight[index];
                     doc.setFont('helvetica', 'bold');
                     doc.text(rightField.label, midPoint, y);
                     doc.setFont('helvetica', 'normal');
-                    doc.text(rightField.value, midPoint + 40, y, { maxWidth: 80 });
+                    doc.text(String(rightField.value), midPoint + 40, y, { maxWidth: 80 });
                 }
                 y += 7;
             });
-            // Add remaining right-column fields if any
             for (let i = shipmentFieldsLeft.length; i < shipmentFieldsRight.length; i++) {
                 const rightField = shipmentFieldsRight[i];
                 doc.setFont('helvetica', 'bold');
                 doc.text(rightField.label, midPoint, y);
                 doc.setFont('helvetica', 'normal');
-                doc.text(rightField.value, midPoint + 40, y, { maxWidth: 80 });
+                doc.text(String(rightField.value), midPoint + 40, y, { maxWidth: 80 });
                 y += 7;
             }
             y += 10;
@@ -349,78 +354,135 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
                 "Net Wt/Carton (kg)", "Gross Wt/Carton (kg)", "Origin", "Dimensions (cm)",
                 "Storage Instructions", "Notes"
             ];
-            const tableData = itemDataArray.map(item => [
-                item["Purchase Order Number"],
-                item["Item No."],
-                item["Product Name"],
-                item["SKU"],
-                item["Product EAN Code"],
-                item["Product HS Code"],
-                item["Batch Code"],
-                item["Manufacturing Date"],
-                item["Expiry Date"],
-                item["Quantity (Units)"],
-                item["Units per Carton"],
-                item["Number of Cartons"],
-                item["Packaging Type"],
-                item["Net Weight per Carton (kg)"],
-                item["Gross Weight per Carton (kg)"],
-                item["Product Origin"],
-                item["Carton Dimensions (LxWxH cm)"],
-                item["Storage Instructions"],
-                item["Notes"]
-            ]);
             console.log('Table headers:', tableHeaders);
-            console.log('Table data:', tableData);
 
-            doc.autoTable({
-                startY: y,
-                head: [tableHeaders],
-                body: tableData,
-                theme: 'grid',
-                styles: {
-                    font: 'helvetica',
-                    fontSize: 7, // Reduced to fit more columns
-                    textColor: [0, 0, 0],
-                    lineColor: [0, 0, 0],
-                    lineWidth: 0.1,
-                    cellPadding: 1
-                },
-                headStyles: {
-                    fillColor: [52, 152, 219], // #3498db
-                    textColor: [255, 255, 255],
-                    fontStyle: 'bold',
-                    fontSize: 8
-                },
-                columnStyles: {
-                    0: { cellWidth: 12 }, // PO No.
-                    1: { cellWidth: 8 }, // Item No.
-                    2: { cellWidth: 20 }, // Product Name
-                    3: { cellWidth: 12 }, // SKU
-                    4: { cellWidth: 12 }, // EAN Code
-                    5: { cellWidth: 10 }, // HS Code
-                    6: { cellWidth: 10 }, // Batch Code
-                    7: { cellWidth: 12 }, // Mfg Date
-                    8: { cellWidth: 12 }, // Expiry Date
-                    9: { cellWidth: 8 }, // Qty (Units)
-                    10: { cellWidth: 8 }, // Units/Carton
-                    11: { cellWidth: 8 }, // Cartons
-                    12: { cellWidth: 15 }, // Packaging
-                    13: { cellWidth: 12 }, // Net Wt/Carton
-                    14: { cellWidth: 12 }, // Gross Wt/Carton
-                    15: { cellWidth: 10 }, // Origin
-                    16: { cellWidth: 12 }, // Dimensions
-                    17: { cellWidth: 15 }, // Storage Instructions
-                    18: { cellWidth: 15 } // Notes
-                },
-                margin: { left: margin, right: margin }
-            });
-            console.log('Table added with 19 columns, total width ~213mm');
+            // Validate and prepare table data
+            const tableData = [];
+            for (let i = 0; i < itemDataArray.length; i++) {
+                const item = itemDataArray[i];
+                try {
+                    const row = [
+                        String(item["Purchase Order Number"] || ''),
+                        String(item["Item No."] || ''),
+                        String(item["Product Name"] || ''),
+                        String(item["SKU"] || ''),
+                        String(item["Product EAN Code"] || ''),
+                        String(item["Product HS Code"] || ''),
+                        String(item["Batch Code"] || ''),
+                        String(item["Manufacturing Date"] || ''),
+                        String(item["Expiry Date"] || ''),
+                        String(item["Quantity (Units)"] || ''),
+                        String(item["Units per Carton"] || ''),
+                        String(item["Number of Cartons"] || ''),
+                        String(item["Packaging Type"] || ''),
+                        String(item["Net Weight per Carton (kg)"] || ''),
+                        String(item["Gross Weight per Carton (kg)"] || ''),
+                        String(item["Product Origin"] || ''),
+                        String(item["Carton Dimensions (LxWxH cm)"] || ''),
+                        String(item["Storage Instructions"] || ''),
+                        String(item["Notes"] || '')
+                    ];
+                    tableData.push(row);
+                    console.log(`Processed item ${i + 1} for table`);
+                } catch (error) {
+                    console.error(`Error processing item ${i + 1}:`, error.message);
+                }
+            }
+            console.log('Table data prepared:', tableData);
+
+            if (tableData.length === 0) {
+                console.warn('No valid items to display in table');
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                doc.text('No items to display', margin, y);
+            } else {
+                // Render table with timeout to detect hangs
+                let tableRendered = false;
+                const tablePromise = new Promise((resolve, reject) => {
+                    setTimeout(() => {
+                        if (!tableRendered) {
+                            reject(new Error('Table rendering timed out after 10 seconds'));
+                        }
+                    }, 10000); // 10-second timeout
+
+                    try {
+                        doc.autoTable({
+                            startY: y,
+                            head: [tableHeaders],
+                            body: tableData,
+                            theme: 'grid',
+                            styles: {
+                                font: 'helvetica',
+                                fontSize: 7,
+                                textColor: [0, 0, 0],
+                                lineColor: [0, 0, 0],
+                                lineWidth: 0.1,
+                                cellPadding: 1,
+                                overflow: 'linebreak' // Enable text wrapping
+                            },
+                            headStyles: {
+                                fillColor: [52, 152, 219], // #3498db
+                                textColor: [255, 255, 255],
+                                fontStyle: 'bold',
+                                fontSize: 8
+                            },
+                            columnStyles: {
+                                0: { cellWidth: 12 }, // PO No.
+                                1: { cellWidth: 8 }, // Item No.
+                                2: { cellWidth: 20 }, // Product Name
+                                3: { cellWidth: 12 }, // SKU
+                                4: { cellWidth: 12 }, // EAN Code
+                                5: { cellWidth: 10 }, // HS Code
+                                6: { cellWidth: 10 }, // Batch Code
+                                7: { cellWidth: 12 }, // Mfg Date
+                                8: { cellWidth: 12 }, // Expiry Date
+                                9: { cellWidth: 8 }, // Qty (Units)
+                                10: { cellWidth: 8 }, // Units/Carton
+                                11: { cellWidth: 8 }, // Cartons
+                                12: { cellWidth: 15 }, // Packaging
+                                13: { cellWidth: 12 }, // Net Wt/Carton
+                                14: { cellWidth: 12 }, // Gross Wt/Carton
+                                15: { cellWidth: 10 }, // Origin
+                                16: { cellWidth: 12 }, // Dimensions
+                                17: { cellWidth: 15 }, // Storage Instructions
+                                18: { cellWidth: 15 } // Notes
+                            },
+                            margin: { left: margin, right: margin },
+                            didParseCell: () => {
+                                console.log('Parsing table cell');
+                            },
+                            didDrawPage: () => {
+                                console.log('Table page drawn');
+                            }
+                        });
+                        tableRendered = true;
+                        resolve();
+                    } catch (error) {
+                        reject(error);
+                    }
+                });
+
+                tablePromise
+                    .then(() => {
+                        console.log('Table added with 19 columns, total width ~213mm');
+                    })
+                    .catch((error) => {
+                        console.error('Error rendering table:', error.message);
+                        doc.setFont('helvetica', 'normal');
+                        doc.setFontSize(10);
+                        doc.text('Error rendering item table: ' + error.message, margin, y);
+                    });
+            }
 
             // Save the PDF
-            console.log('Saving PDF');
-            doc.save(`packing_list_${shipmentData["Packing List No"] || 'export'}.pdf`);
-            console.log('PDF download triggered');
+            console.log('Attempting to save PDF');
+            try {
+                doc.save(`packing_list_${shipmentData["Packing List No"] || 'export'}.pdf`);
+                console.log('PDF download triggered');
+            } catch (error) {
+                console.error('Error saving PDF:', error.message);
+                alert('Failed to download PDF: ' + error.message);
+            }
         } catch (error) {
             console.error('PDF Error:', error.message);
             alert('Error generating PDF: ' + error.message);
