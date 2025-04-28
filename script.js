@@ -1,5 +1,24 @@
 console.log('script.js loaded at:', new Date().toISOString());
 
+// Global variable to store logo data URL
+let companyLogoDataUrl = null;
+
+// Handle logo upload
+document.querySelector('input[name="company_logo"]').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            companyLogoDataUrl = event.target.result;
+            console.log('Logo uploaded, data URL stored');
+        };
+        reader.readAsDataURL(file);
+    } else {
+        companyLogoDataUrl = null;
+        console.log('No logo uploaded');
+    }
+});
+
 // Set the initial Item No. for the first item on page load and initialize no-expiry checkbox
 document.addEventListener('DOMContentLoaded', () => {
     console.log('DOM loaded, initializing first item');
@@ -134,12 +153,61 @@ document.getElementById('carrierSelect').addEventListener('change', (e) => {
     }
 });
 
-// CSV Export Functionality
+// Form submission handling for CSV and PDF export
 document.getElementById('packingListForm').addEventListener('submit', (e) => {
     console.log('Form submitted');
     e.preventDefault();
     const action = e.submitter ? e.submitter.value : 'csv';
     console.log('Action:', action);
+
+    // Collect Shipment Details
+    const shipmentData = {
+        "Supplier Name": document.querySelector('input[name="supplier_name"]').value || '',
+        "Supplier Address": document.querySelector('textarea[name="supplier_address"]').value || '',
+        "Ship to Customer Name and Details": document.querySelector('textarea[name="ship_to_customer"]').value || '',
+        "Goods Description": document.querySelector('textarea[name="goods_description"]').value || '',
+        "Packing List No": document.querySelector('input[name="packing_list_no"]').value || '',
+        "Invoice No": document.querySelector('input[name="invoice_no"]').value || '',
+        "Carrier Name": document.querySelector('select[name="carrier_name"]').value === 'Other' 
+            ? (document.querySelector('input[name="other_carrier"]').value || '')
+            : document.querySelector('select[name="carrier_name"]').value || '',
+        "Total Pallets": document.querySelector('input[name="total_pallets"]').value || '',
+        "Total Cartons": document.querySelector('input[name="total_cartons"]').value || '',
+        "Total Net Weight (kg)": document.querySelector('input[name="total_net_weight"]').value || '',
+        "Total Gross Weight (kg)": document.querySelector('input[name="total_gross_weight"]').value || ''
+    };
+    console.log('Shipment Data:', shipmentData);
+
+    // Collect Itemized Packing List
+    const items = document.querySelectorAll('.item');
+    const itemDataArray = [];
+    items.forEach((item, index) => {
+        console.log(`Processing item ${index + 1}`);
+        const noExpiryCheckbox = item.querySelector('input[name="no_expiry[]"]');
+        const expiryDateInput = item.querySelector('input[name="expiry_date[]"]');
+        const itemData = {
+            "Purchase Order Number": item.querySelector('input[name="purchase_order_number[]"]').value || '',
+            "Item No.": item.querySelector('input[name="item_no[]"]').value || '',
+            "Product Name": item.querySelector('input[name="product_name[]"]').value || '',
+            "SKU": item.querySelector('input[name="sku[]"]').value || '',
+            "Product EAN Code": item.querySelector('input[name="ean_code[]"]').value || '',
+            "Product HS Code": item.querySelector('input[name="hs_code[]"]').value || '',
+            "Batch Code": item.querySelector('input[name="batch_code[]"]').value || '',
+            "Manufacturing Date": item.querySelector('input[name="manufacturing_date[]"]').value || '',
+            "Expiry Date": noExpiryCheckbox.checked ? 'Not Applicable' : (expiryDateInput.value || ''),
+            "Quantity (Units)": item.querySelector('input[name="quantity[]"]').value || '',
+            "Units per Carton": item.querySelector('input[name="units_per_carton[]"]').value || '',
+            "Number of Cartons": item.querySelector('input[name="number_of_cartons[]"]').value || '',
+            "Packaging Type": item.querySelector('select[name="packaging_type[]"]').value || '',
+            "Net Weight per Carton (kg)": item.querySelector('input[name="net_weight_carton[]"]').value || '',
+            "Gross Weight per Carton (kg)": item.querySelector('input[name="gross_weight_carton[]"]').value || '',
+            "Product Origin": item.querySelector('input[name="product_origin[]"]').value || '',
+            "Carton Dimensions (LxWxH cm)": item.querySelector('input[name="carton_dimensions[]"]').value || '',
+            "Storage Instructions": item.querySelector('textarea[name="storage_instructions[]"]').value || '',
+            "Notes": item.querySelector('textarea[name="notes[]"]').value || ''
+        };
+        itemDataArray.push(itemData);
+    });
 
     if (action === 'csv') {
         console.log('CSV generation started');
@@ -148,27 +216,6 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
                 console.error('Error: SheetJS (XLSX) is not loaded');
                 throw new Error('SheetJS library is not loaded. Ensure xlsx.full.min.js is in the project directory or CDN is accessible.');
             }
-            // Collect Shipment Details
-            const shipmentData = {
-                "Supplier Name": document.querySelector('input[name="supplier_name"]').value || '',
-                "Supplier Address": document.querySelector('textarea[name="supplier_address"]').value || '',
-                "Ship to Customer Name and Details": document.querySelector('textarea[name="ship_to_customer"]').value || '',
-                "Goods Description": document.querySelector('textarea[name="goods_description"]').value || '',
-                "Packing List No": document.querySelector('input[name="packing_list_no"]').value || '',
-                "Invoice No": document.querySelector('input[name="invoice_no"]').value || '',
-                "Carrier Name": document.querySelector('select[name="carrier_name"]').value === 'Other' 
-                    ? (document.querySelector('input[name="other_carrier"]').value || '')
-                    : document.querySelector('select[name="carrier_name"]').value || '',
-                "Total Pallets": document.querySelector('input[name="total_pallets"]').value || '',
-                "Total Cartons": document.querySelector('input[name="total_cartons"]').value || '',
-                "Total Net Weight (kg)": document.querySelector('input[name="total_net_weight"]').value || '',
-                "Total Gross Weight (kg)": document.querySelector('input[name="total_gross_weight"]').value || ''
-            };
-            console.log('Shipment Data:', shipmentData);
-
-            // Collect Itemized Packing List
-            const items = document.querySelectorAll('.item');
-            const csvData = [];
             const headers = [
                 "Supplier Name", "Supplier Address", "Ship to Customer Name and Details", 
                 "Goods Description", "Packing List No", "Invoice No", "Carrier Name", 
@@ -180,44 +227,13 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
                 "Product Origin", "Carton Dimensions (LxWxH cm)",
                 "Storage Instructions", "Notes"
             ];
-
-            items.forEach((item, index) => {
-                console.log(`Processing item ${index + 1}`);
-                const noExpiryCheckbox = item.querySelector('input[name="no_expiry[]"]');
-                const expiryDateInput = item.querySelector('input[name="expiry_date[]"]');
-                const itemData = {
-                    "Purchase Order Number": item.querySelector('input[name="purchase_order_number[]"]').value || '',
-                    "Item No.": item.querySelector('input[name="item_no[]"]').value || '',
-                    "Product Name": item.querySelector('input[name="product_name[]"]').value || '',
-                    "SKU": item.querySelector('input[name="sku[]"]').value || '',
-                    "Product EAN Code": item.querySelector('input[name="ean_code[]"]').value || '',
-                    "Product HS Code": item.querySelector('input[name="hs_code[]"]').value || '',
-                    "Batch Code": item.querySelector('input[name="batch_code[]"]').value || '',
-                    "Manufacturing Date": item.querySelector('input[name="manufacturing_date[]"]').value || '',
-                    "Expiry Date": noExpiryCheckbox.checked ? 'Not Applicable' : (expiryDateInput.value || ''),
-                    "Quantity (Units)": item.querySelector('input[name="quantity[]"]').value || '',
-                    "Units per Carton": item.querySelector('input[name="units_per_carton[]"]').value || '',
-                    "Number of Cartons": item.querySelector('input[name="number_of_cartons[]"]').value || '',
-                    "Packaging Type": item.querySelector('select[name="packaging_type[]"]').value || '',
-                    "Net Weight per Carton (kg)": item.querySelector('input[name="net_weight_carton[]"]').value || '',
-                    "Gross Weight per Carton (kg)": item.querySelector('input[name="gross_weight_carton[]"]').value || '',
-                    "Product Origin": item.querySelector('input[name="product_origin[]"]').value || '',
-                    "Carton Dimensions (LxWxH cm)": item.querySelector('input[name="carton_dimensions[]"]').value || '',
-                    "Storage Instructions": item.querySelector('textarea[name="storage_instructions[]"]').value || '',
-                    "Notes": item.querySelector('textarea[name="notes[]"]').value || ''
-                };
-                csvData.push({ ...shipmentData, ...itemData });
-            });
+            const csvData = itemDataArray.map(item => ({ ...shipmentData, ...item }));
             console.log('CSV Data:', csvData);
 
-            // Convert to CSV with headers only once
-            console.log('Converting to CSV');
             const worksheet = XLSX.utils.json_to_sheet(csvData, { header: headers, skipHeader: false });
             const csv = XLSX.utils.sheet_to_csv(worksheet);
             console.log('CSV generated, length:', csv.length);
 
-            // Download file
-            console.log('Creating download link');
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');
             link.href = URL.createObjectURL(blob);
@@ -229,6 +245,148 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
         } catch (error) {
             console.error('CSV Error:', error.message);
             alert('Error generating CSV: ' + error.message);
+        }
+    } else if (action === 'pdf') {
+        console.log('PDF generation started');
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            });
+
+            // Define margins and starting position
+            const margin = 20;
+            let y = margin;
+
+            // Header: Logo and Supplier Info
+            if (companyLogoDataUrl) {
+                try {
+                    doc.addImage(companyLogoDataUrl, 'PNG', margin, y, 50, 0); // Auto-scale height, max width 50mm
+                    y += 30; // Adjust for logo height
+                } catch (error) {
+                    console.error('Error adding logo to PDF:', error.message);
+                }
+            }
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12);
+            doc.text(shipmentData["Supplier Name"], margin, y);
+            y += 7;
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.text(shipmentData["Supplier Address"], margin, y, { maxWidth: 170 });
+            y += 10;
+
+            // Shipment Details Section
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12);
+            doc.text('Shipment Details', margin, y);
+            y += 7;
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            const shipmentFields = [
+                { label: 'Ship to Customer:', value: shipmentData["Ship to Customer Name and Details"] },
+                { label: 'Goods Description:', value: shipmentData["Goods Description"] },
+                { label: 'Packing List No:', value: shipmentData["Packing List No"] },
+                { label: 'Invoice No:', value: shipmentData["Invoice No"] },
+                { label: 'Carrier Name:', value: shipmentData["Carrier Name"] },
+                { label: 'Total Pallets:', value: shipmentData["Total Pallets"] },
+                { label: 'Total Cartons:', value: shipmentData["Total Cartons"] },
+                { label: 'Total Net Weight (kg):', value: shipmentData["Total Net Weight (kg)"] },
+                { label: 'Total Gross Weight (kg):', value: shipmentData["Total Gross Weight (kg)"] }
+            ];
+            shipmentFields.forEach(field => {
+                doc.setFont('helvetica', 'bold');
+                doc.text(field.label, margin, y);
+                doc.setFont('helvetica', 'normal');
+                doc.text(field.value, margin + 50, y, { maxWidth: 120 });
+                y += 7;
+            });
+            y += 10;
+
+            // Itemized Packing List Table
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(12);
+            doc.text('Itemized Packing List', margin, y);
+            y += 7;
+
+            const tableHeaders = [
+                "PO No.", "Item No.", "Product Name", "SKU", "EAN Code", "HS Code", "Batch Code",
+                "Mfg Date", "Expiry Date", "Qty (Units)", "Units/Carton", "Cartons", "Packaging",
+                "Net Wt/Carton (kg)", "Gross Wt/Carton (kg)", "Origin", "Dimensions (cm)",
+                "Storage Instructions", "Notes"
+            ];
+            const tableData = itemDataArray.map(item => [
+                item["Purchase Order Number"],
+                item["Item No."],
+                item["Product Name"],
+                item["SKU"],
+                item["Product EAN Code"],
+                item["Product HS Code"],
+                item["Batch Code"],
+                item["Manufacturing Date"],
+                item["Expiry Date"],
+                item["Quantity (Units)"],
+                item["Units per Carton"],
+                item["Number of Cartons"],
+                item["Packaging Type"],
+                item["Net Weight per Carton (kg)"],
+                item["Gross Weight per Carton (kg)"],
+                item["Product Origin"],
+                item["Carton Dimensions (LxWxH cm)"],
+                item["Storage Instructions"],
+                item["Notes"]
+            ]);
+
+            doc.autoTable({
+                startY: y,
+                head: [tableHeaders],
+                body: tableData,
+                theme: 'grid',
+                styles: {
+                    font: 'helvetica',
+                    fontSize: 8,
+                    textColor: [0, 0, 0],
+                    lineColor: [0, 0, 0],
+                    lineWidth: 0.1
+                },
+                headStyles: {
+                    fillColor: [52, 152, 219], // #3498db
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold'
+                },
+                columnStyles: {
+                    0: { cellWidth: 15 },
+                    1: { cellWidth: 10 },
+                    2: { cellWidth: 20 },
+                    3: { cellWidth: 15 },
+                    4: { cellWidth: 15 },
+                    5: { cellWidth: 15 },
+                    6: { cellWidth: 15 },
+                    7: { cellWidth: 15 },
+                    8: { cellWidth: 15 },
+                    9: { cellWidth: 10 },
+                    10: { cellWidth: 10 },
+                    11: { cellWidth: 10 },
+                    12: { cellWidth: 20 },
+                    13: { cellWidth: 15 },
+                    14: { cellWidth: 15 },
+                    15: { cellWidth: 15 },
+                    16: { cellWidth: 15 },
+                    17: { cellWidth: 20 },
+                    18: { cellWidth: 20 }
+                },
+                margin: { left: margin, right: margin }
+            });
+
+            // Save the PDF
+            console.log('Saving PDF');
+            doc.save(`packing_list_${shipmentData["Packing List No"] || 'export'}.pdf`);
+            console.log('PDF download triggered');
+        } catch (error) {
+            console.error('PDF Error:', error.message);
+            alert('Error generating PDF: ' + error.message);
         }
     }
 });
