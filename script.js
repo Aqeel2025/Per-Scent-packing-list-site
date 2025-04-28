@@ -265,9 +265,18 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
     } else if (action === 'pdf') {
         console.log('PDF generation started');
         try {
-            // Check if jsPDF and autoTable are available
-            if (!window.jspdf || !window.jspdf.jsPDF || !window.jspdf.jsPDF.prototype.autoTable) {
-                throw new Error('jsPDF or jsPDF-AutoTable library not loaded. Ensure CDN scripts are accessible.');
+            // Enhanced library loading check
+            if (!window.jspdf) {
+                console.error('jsPDF not loaded: window.jspdf is undefined');
+                throw new Error('jsPDF library not loaded. Ensure the CDN or local script for jspdf.umd.min.js is accessible.');
+            }
+            if (!window.jspdf.jsPDF) {
+                console.error('jsPDF.jsPDF not loaded: window.jspdf.jsPDF is undefined');
+                throw new Error('jsPDF core not loaded. Ensure the CDN or local script for jspdf.umd.min.js is correct.');
+            }
+            if (!window.jspdf.jsPDF.prototype.autoTable) {
+                console.error('jsPDF-AutoTable not loaded: window.jspdf.jsPDF.prototype.autoTable is undefined');
+                throw new Error('jsPDF-AutoTable plugin not loaded. Ensure the CDN or local script for jspdf.plugin.autotable.min.js is accessible and loaded after jsPDF.');
             }
             console.log('jsPDF and autoTable libraries confirmed loaded');
 
@@ -520,7 +529,7 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
             }
         } catch (error) {
             console.error('PDF Error:', error.message);
-            alert('Error generating PDF: ' + error.message);
+            alert('Error generating PDF: ' + error.message + '. Please check your internet connection, disable ad blockers, or contact support.');
         }
     }
 });
