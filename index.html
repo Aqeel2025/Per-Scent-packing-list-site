@@ -68,6 +68,7 @@
                     <label>Batch Code: <input type="text" name="batch_code[]" required></label>
                     <label>Manufacturing Date: <input type="date" name="manufacturing_date[]" required></label>
                     <label>Expiry Date: <input type="date" name="expiry_date[]" required></label>
+                    <label>Expiry (Not Applicable): <input type="checkbox" name="no_expiry[]" class="no-expiry-checkbox"></label>
                     <label>Quantity (Units): <input type="number" name="quantity[]" required min="0"></label>
                     <label>Units per Carton: <input type="number" name="units_per_carton[]" min="0"></label>
                     <label>Number of Cartons: <input type="number" name="number_of_cartons[]" min="0"></label>
@@ -81,6 +82,8 @@
                     </label>
                     <label>Net Weight per Carton (kg): <input type="number" name="net_weight_carton[]" step="0.1" min="0"></label>
                     <label>Gross Weight per Carton (kg): <input type="number" name="gross_weight_carton[]" step="0.1" min="0"></label>
+                    <label>Product Origin: <input type="text" name="product_origin[]"></label>
+                    <label>Carton Dimensions (LxWxH cm): <input type="text" name="carton_dimensions[]" placeholder="e.g., 50x30x20"></label>
                     <label>Storage Instructions: <textarea name="storage_instructions[]"></textarea></label>
                     <label>Notes: <textarea name="notes[]"></textarea></label>
                     <button type="button" class="remove-item">Remove Item</button>
@@ -91,5 +94,5 @@
         </form>
     </main>
     <script src="script.js"></script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9375a830f9b6673d',t:'MTc0NTgzMzg0My4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
