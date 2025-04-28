@@ -74,49 +74,57 @@ document.getElementById('addItem').addEventListener('click', () => {
     console.log('Add Another Item clicked');
     const itemsContainer = document.getElementById('items');
     if (!itemsContainer) {
-        console.error('Error: #items container not found');
+        console.error('Error: #items container not found in DOM');
+        alert('Error: Items container not found. Please check the form structure.');
         return;
     }
     const firstItem = itemsContainer.querySelector('.item');
     if (!firstItem) {
         console.error('Error: No .item element to clone');
+        alert('Error: No item template found. Please check the form structure.');
         return;
     }
-    const newItem = firstItem.cloneNode(true);
+    try {
+        const newItem = firstItem.cloneNode(true);
 
-    // Clear all inputs in the new item except Item No.
-    newItem.querySelectorAll('input, textarea, select').forEach(input => {
-        if (input.tagName === 'SELECT') {
-            input.selectedIndex = 0;
-        } else if (input.name !== 'item_no[]') {
-            input.value = '';
-        }
-        // Reset checkbox and expiry date states
-        if (input.name === 'no_expiry[]') {
-            input.checked = false;
-        }
-        if (input.name === 'expiry_date[]') {
-            input.disabled = false;
-            input.required = true;
-        }
-    });
+        // Clear all inputs in the new item except Item No.
+        newItem.querySelectorAll('input, textarea, select').forEach(input => {
+            if (input.tagName === 'SELECT') {
+                input.selectedIndex = 0;
+            } else if (input.name !== 'item_no[]') {
+                input.value = '';
+            }
+            // Reset checkbox and expiry date states
+            if (input.name === 'no_expiry[]') {
+                input.checked = false;
+            }
+            if (input.name === 'expiry_date[]') {
+                input.disabled = false;
+                input.required = true;
+            }
+        });
 
-    // Set the Item No. for the new item
-    const currentItemCount = itemsContainer.querySelectorAll('.item').length;
-    const newItemNoInput = newItem.querySelector('input[name="item_no[]"]');
-    if (!newItemNoInput) {
-        console.error('Error: Item No. input not found in new item');
-        return;
+        // Set the Item No. for the new item
+        const currentItemCount = itemsContainer.querySelectorAll('.item').length;
+        const newItemNoInput = newItem.querySelector('input[name="item_no[]"]');
+        if (!newItemNoInput) {
+            console.error('Error: Item No. input not found in new item');
+            alert('Error: Item No. input not found in new item.');
+            return;
+        }
+        newItemNoInput.value = currentItemCount + 1;
+        newItemNoInput.readOnly = true;
+        console.log('Set new item Item No. to:', currentItemCount + 1);
+
+        itemsContainer.appendChild(newItem);
+        console.log('Appended new item to #items');
+
+        // Initialize no-expiry checkbox for the new item
+        initializeNoExpiryCheckbox(newItem);
+    } catch (error) {
+        console.error('Error adding new item:', error.message);
+        alert('Error adding new item: ' + error.message);
     }
-    newItemNoInput.value = currentItemCount + 1;
-    newItemNoInput.readOnly = true;
-    console.log('Created new item with Item No:', currentItemCount + 1);
-
-    itemsContainer.appendChild(newItem);
-    console.log('Appended new item to #items');
-
-    // Initialize no-expiry checkbox for the new item
-    initializeNoExpiryCheckbox(newItem);
 });
 
 // Remove item functionality with renumbering
@@ -395,21 +403,30 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(10);
                 doc.text('No items to display', margin, y);
+                // Save partial PDF without table
+                console.log('Attempting to save partial PDF (no items)');
+                try {
+                    doc.save(`packing_list_${shipmentData["Packing List No"] || 'export'}.pdf`);
+                    console.log('Partial PDF download triggered');
+                } catch (error) {
+                    console.error('Error saving partial PDF:', error.message);
+                    alert('Failed to download PDF: ' + error.message);
+                }
             } else {
                 // Render table with timeout to detect hangs
                 let tableRendered = false;
                 const tablePromise = new Promise((resolve, reject) => {
                     setTimeout(() => {
                         if (!tableRendered) {
-                            reject(new Error('Table rendering timed out after 10 seconds'));
+                            reject(new Error('Table rendering timed out after 5 seconds'));
                         }
-                    }, 10000); // 10-second timeout
+                    }, 5000); // Reduced timeout for faster feedback
 
                     try {
                         doc.autoTable({
                             startY: y,
                             head: [tableHeaders],
-                            body: tableData,
+                            body: tableData.slice(0, 50), // Limit to 50 rows for performance
                             theme: 'grid',
                             styles: {
                                 font: 'helvetica',
@@ -418,7 +435,7 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
                                 lineColor: [0, 0, 0],
                                 lineWidth: 0.1,
                                 cellPadding: 1,
-                                overflow: 'linebreak' // Enable text wrapping
+                                overflow: 'linebreak'
                             },
                             headStyles: {
                                 fillColor: [52, 152, 219], // #3498db
@@ -465,23 +482,31 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
                 tablePromise
                     .then(() => {
                         console.log('Table added with 19 columns, total width ~213mm');
+                        // Save PDF
+                        console.log('Attempting to save PDF');
+                        try {
+                            doc.save(`packing_list_${shipmentData["Packing List No"] || 'export'}.pdf`);
+                            console.log('PDF download triggered');
+                        } catch (error) {
+                            console.error('Error saving PDF:', error.message);
+                            alert('Failed to download PDF: ' + error.message);
+                        }
                     })
                     .catch((error) => {
                         console.error('Error rendering table:', error.message);
                         doc.setFont('helvetica', 'normal');
                         doc.setFontSize(10);
                         doc.text('Error rendering item table: ' + error.message, margin, y);
+                        // Save partial PDF
+                        console.log('Attempting to save partial PDF (table error)');
+                        try {
+                            doc.save(`packing_list_${shipmentData["Packing List No"] || 'export'}.pdf`);
+                            console.log('Partial PDF download triggered');
+                        } catch (error) {
+                            console.error('Error saving partial PDF:', error.message);
+                            alert('Failed to download PDF: ' + error.message);
+                        }
                     });
-            }
-
-            // Save the PDF
-            console.log('Attempting to save PDF');
-            try {
-                doc.save(`packing_list_${shipmentData["Packing List No"] || 'export'}.pdf`);
-                console.log('PDF download triggered');
-            } catch (error) {
-                console.error('Error saving PDF:', error.message);
-                alert('Failed to download PDF: ' + error.message);
             }
         } catch (error) {
             console.error('PDF Error:', error.message);
@@ -610,7 +635,7 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
                 'B7', 'B8', 'B9', 'B10', 'B11', 'B12', // Right column shipment details
                 `A${shipmentRows.length + 2}`, // Table headers
                 `A${shipmentRows.length + tableData.length + 3}`, // Totals
-                `A${shipmentRows.length + tableData.length + 8}` // Authorized By
+                `A${shipmentRow.length + tableData.length + 8}` // Authorized By
             ];
 
             boldCells.forEach(cell => {
