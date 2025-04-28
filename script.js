@@ -124,7 +124,7 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
                     ? (document.querySelector('input[name="other_carrier"]').value || '')
                     : document.querySelector('select[name="carrier_name"]').value || '',
                 "Total Pallets": document.querySelector('input[name="total_pallets"]').value || '',
-                "Total Cartons": document.querySelector('input[name="total_cartons"]').value || '',
+                "Total Cartons": document.querySelector('input[name="total_cartons Türkçe").value || '',
                 "Total Net Weight (kg)": document.querySelector('input[name="total_net_weight"]').value || '',
                 "Total Gross Weight (kg)": document.querySelector('input[name="total_gross_weight"]').value || ''
             };
@@ -141,6 +141,7 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
                 "Product HS Code", "Batch Code", "Manufacturing Date", "Expiry Date", "Quantity (Units)", 
                 "Units per Carton", "Number of Cartons", "Packaging Type", 
                 "Net Weight per Carton (kg)", "Gross Weight per Carton (kg)", 
+                "Product Origin", "Carton Dimensions (LxWxH cm)",
                 "Storage Instructions", "Notes"
             ];
 
@@ -162,6 +163,8 @@ document.getElementById('packingListForm').addEventListener('submit', (e) => {
                     "Packaging Type": item.querySelector('select[name="packaging_type[]"]').value || '',
                     "Net Weight per Carton (kg)": item.querySelector('input[name="net_weight_carton[]"]').value || '',
                     "Gross Weight per Carton (kg)": item.querySelector('input[name="gross_weight_carton[]"]').value || '',
+                    "Product Origin": item.querySelector('input[name="product_origin[]"]').value || '',
+                    "Carton Dimensions (LxWxH cm)": item.querySelector('input[name="carton_dimensions[]"]').value || '',
                     "Storage Instructions": item.querySelector('textarea[name="storage_instructions[]"]').value || '',
                     "Notes": item.querySelector('textarea[name="notes[]"]').value || ''
                 };
